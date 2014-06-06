@@ -13,7 +13,7 @@
 
 //static unsigned char buffer[240 * 320 / 8];
 
-#define BYTES_FOR_BITS(x) (x/8 + (x%8? 1:0))
+
 
 int decodepbm(unsigned char *buffer, int bw, int bh, FILE* f) {
 	int w, h;
