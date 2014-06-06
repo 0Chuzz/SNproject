@@ -7,11 +7,12 @@
 
 #include<png.h>
 #include<stdlib.h>
+#include<assert.h>
 
 int decodePng(const char filename[], unsigned char buff[], int w, int h){
 	FILE *fp;
 	char header[8];
-	int x, y;
+	int y;
 
 	int width, height;
 	png_byte color_type;
@@ -63,18 +64,16 @@ int decodePng(const char filename[], unsigned char buff[], int w, int h){
     */
 
     char *rowptrs[240];
-    row_pointers = rowptrs;
+    row_pointers = (png_bytep *) rowptrs;
     for (y=0; y< 240; y++){
-    	rowptrs[y] = buff + (y*40);
+    	rowptrs[y] = (png_bytep) buff + (y*40);
     }
-
+    assert(height == 240 && width == 320 && number_of_passes == 1 &&
+    		color_type == PNG_COLOR_TYPE_GRAY && bit_depth == 1);
     png_read_image(png_ptr, row_pointers);
     fclose(fp);
 
     //printf("%d %d %d %d %d\n", width, height, color_type, bit_depth, png_get_rowbytes(png_ptr,info_ptr));
-    for (y = 0; y < 240*40; y++){
-    	buff[y] = ~buff[y];
-    }
 
     return 0;
 }

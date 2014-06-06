@@ -22,7 +22,7 @@ char left(iter_t *it);
 char right(iter_t *it);
 char nextLtr(iter_t *it);
 char nextTopdown(iter_t *it);
-char at(unsigned char buff[], iter_t *it);
+char deref(unsigned char buff[], iter_t *it);
 
 
 #endif /* IMAGEITER_H_ */

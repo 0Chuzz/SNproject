@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "pbmdecoder.h"
+#include "utils.h"
 
 //static unsigned char buffer[240 * 320 / 8];
 
@@ -25,11 +26,11 @@ int decodepbm(unsigned char *buffer, int bw, int bh, FILE* f) {
 		return -1;
 
 	for (j = 0; j < bh; j++) {
-		for (i = 0; i < BYTES_FOR_BITS(bw); i++) {
+		for (i = 0; i < BYTES_FOR(bw); i++) {
 			fread(&col, 1, 1, f);
-			buffer[j * BYTES_FOR_BITS(bw) + i] = col;
+			buffer[j * BYTES_FOR(bw) + i] = ~col;
 		}
-		while (i < BYTES_FOR_BITS(w)) {
+		while (i < BYTES_FOR(w)) {
 			fread(&col, 1, 1, f);
 			i++;
 		}

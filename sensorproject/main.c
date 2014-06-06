@@ -12,6 +12,7 @@
 #include "pngdecoder.h"
 #include "ppmencoder.h"
 #include "reflabeler.h"
+#include "sievelabeler.h"
 
 static unsigned char bitbuffer[320 * 240 / 8];
 static unsigned char expanded[320 * 240];
@@ -41,7 +42,8 @@ int main(int argn, char *argv[]) {
 	fwrite(asd, 320 * 240 / 8, 1, f);
 	fclose(f);
 	//expandBW(expanded, asd, 320, 240);
-	reflabel(expanded, asd);
+	//reflabel(expanded, asd);
+	sieveLabel(expanded, asd);
 	saveLabeled("testlabeled.ppm", expanded, 320, 240);
 	return 0;
 }

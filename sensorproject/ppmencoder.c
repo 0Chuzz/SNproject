@@ -44,7 +44,7 @@ int expandBW(unsigned char expanded[], unsigned char buff[], int w, int h){
 
 	i=0;
 	do{
-		expanded[i++] = at(buff, &it) ? 1: 0;
+		expanded[i++] = deref(buff, &it) ? 1: 0;
 	}while(nextLtr(&it));
 
 	if (i != w * h ) return -1;

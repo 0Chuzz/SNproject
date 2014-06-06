@@ -71,8 +71,8 @@ char nextTopdown(iter_t *it){
 }
 
 
-char at(unsigned char buff[], iter_t *it){
-	return (buff[it->j * (it->maxi/8) + (it->i/8)] & it->mask)? 0: 1;
+char deref(unsigned char buff[], iter_t *it){
+	return (buff[it->j * (it->maxi/8) + (it->i/8)] & it->mask);
 }
 
 
