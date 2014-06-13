@@ -43,49 +43,63 @@ int sieve_pass(unsigned char *from, unsigned char *in) {
 	return ret;
 }
 
-static unsigned char reverse(unsigned char b) {
-	b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
-	b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
-	b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
-	return b;
+#define RIGHT(buff) ((i < WIDTH - 1)? at(buff, i+1, j) : 0)
+#define DOWN(buff) ((j < HEIGHT - 1)? at(buff, i, j+1) : 0)
+
+int sieve_counterpass(unsigned char *from, unsigned char *in) {
+	int i, j;
+	unsigned char move = 0;
+	int ret = ENDPASS;
+
+	for (j = HEIGHT -1; j >= 0; j--) {
+		for (i = WIDTH-1; i >= 0; i--) {
+			if (at(from, i, j)) {
+				if (DOWN(in)) {
+					if (RIGHT(from)) {
+						ret = MOREPASS;
+					}
+					move = 1;
+				} else if (RIGHT(in)) {
+					if (DOWN(from)) {
+						ret = MOREPASS;
+					}
+					move = 1;
+				} else {
+					move = 0;
+				}
+				if (move) {
+					clear_at(from, i, j);
+					set_at(in, i, j);
+				}
+			}
+		}
+	}
+	return ret;
 }
 
-static void flip(unsigned char *buff) {
-	int i;
-	unsigned char tmp;
-	const int len = (BYTES_FOR(WIDTH) * HEIGHT);
-	for (i = 0; i < len / 2; i++) {
-		tmp = buff[i];
-		buff[i] = reverse(buff[len - i]);
-		buff[len - i] = reverse(tmp);
-	}
-}
 
 int sieve_extract(unsigned char *from, unsigned char *to) {
-	int morepasses;
 	int i, j;
-	int flipped = 0;
+	int asd;
 	for (j = 0; j < HEIGHT; j++) {
 		for (i = 0; i < WIDTH; i++) {
 			if (at(from, i, j)) {
 				clear_at(from, i, j);
 				set_at(to, i, j);
-				break;
+				j = HEIGHT;
+				i = WIDTH;
 			}
 		}
 	}
 	if (j == HEIGHT && WIDTH == i)
 		return 1;
 
-	while ((morepasses = sieve_pass(from, to)) == MOREPASS) {
-		flip(from);
-		flip(to);
-		flipped = ~flipped;
-	}
-	if (flipped) {
-		flip(from);
-		flip(to);
-	}
+	do {
+		asd = sieve_pass(from, to);
+		if (asd == MOREPASS) {
+			asd = sieve_counterpass(from, to);
+		}
+	} while (asd == MOREPASS);
 	return 0;
 }
 
@@ -93,14 +107,17 @@ void sieveLabel(unsigned char *expanded, unsigned char *bw) {
 	unsigned char to[BYTES_FOR(WIDTH) * HEIGHT];
 	int i, j;
 	unsigned char label = 1;
+
+	for(i = 0; i < sizeof to; i++) to[i] = 0;
 	while (!sieve_extract(bw, to)) {
 		for (j = 0; j < HEIGHT; j++) {
 			for (i = 0; i < WIDTH; i++) {
 				if (at(to, i, j)) {
-					expanded[i*j] = label;
+					expanded[j*WIDTH + i] = label;
 				}
 			}
 		}
 		label++;
+		for(i = 0; i < sizeof to; i++) to[i] = 0;
 	}
 }
