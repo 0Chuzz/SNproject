@@ -12,33 +12,38 @@
 #define ENDPASS 0
 #define MOREPASS 1
 
-int sieve_pass(unsigned char *from, unsigned char *in) {
+static int tempi, tempj;
+int sieve_pass(unsigned char *from, unsigned char *in, int starti, int startj);
+int sieve_counterpass(unsigned char *from, unsigned char *in, int starti, int startj);
+
+int sieve_pass(unsigned char *from, unsigned char *in, int starti, int startj) {
 	int i, j;
-	unsigned char move = 0;
+	unsigned char endflag = 0;
 	int ret = ENDPASS;
 
-	for (j = 0; j < HEIGHT; j++) {
-		for (i = 0; i < WIDTH; i++) {
+	for (j = startj; j < HEIGHT; j++) {
+
+		for (i = starti; i < WIDTH; i++) {
 			if (at(from, i, j)) {
 				if (UP(in)) {
-					if (LEFT(from)) {
-						ret = MOREPASS;
-					}
-					move = 1;
-				} else if (LEFT(in)) {
-					if (UP(from)) {
-						ret = MOREPASS;
-					}
-					move = 1;
-				} else {
-					move = 0;
-				}
-				if (move) {
 					clear_at(from, i, j);
 					set_at(in, i, j);
+					if (LEFT(from)) {
+						sieve_counterpass(from, in, i-1, j);
+					}
+					endflag = 0;
+				} else if (LEFT(in)) {
+					clear_at(from, i, j);
+					set_at(in, i, j);
+					if (UP(from)) {
+						sieve_counterpass(from, in, i, j-1);
+					}
+					endflag = 0;
 				}
 			}
 		}
+		if (endflag) break;
+		else endflag = 1;
 	}
 	return ret;
 }
@@ -46,34 +51,35 @@ int sieve_pass(unsigned char *from, unsigned char *in) {
 #define RIGHT(buff) ((i < WIDTH - 1)? at(buff, i+1, j) : 0)
 #define DOWN(buff) ((j < HEIGHT - 1)? at(buff, i, j+1) : 0)
 
-int sieve_counterpass(unsigned char *from, unsigned char *in) {
+int sieve_counterpass(unsigned char *from, unsigned char *in, int starti, int startj) {
 	int i, j;
-	unsigned char move = 0;
+	unsigned char endflag = 0;
 	int ret = ENDPASS;
 
-	for (j = HEIGHT -1; j >= 0; j--) {
-		for (i = WIDTH-1; i >= 0; i--) {
+	for (j = startj; j >= 0; j--) {
+		for (i = starti; i >= 0; i--) {
 			if (at(from, i, j)) {
 				if (DOWN(in)) {
-					if (RIGHT(from)) {
-						ret = MOREPASS;
-					}
-					move = 1;
-				} else if (RIGHT(in)) {
-					if (DOWN(from)) {
-						ret = MOREPASS;
-					}
-					move = 1;
-				} else {
-					move = 0;
-				}
-				if (move) {
 					clear_at(from, i, j);
 					set_at(in, i, j);
+					if (RIGHT(from)) {
+						sieve_pass(from, in, i+1, j);
+					}
+					endflag = 0;
+				} else if (RIGHT(in)) {
+					clear_at(from, i, j);
+					set_at(in, i, j);
+					if (DOWN(from)) {
+						sieve_pass(from, in, i, j+1);
+					}
+					endflag = 0;
 				}
 			}
 		}
+		if (endflag) break;
+		else endflag = 1;
 	}
+
 	return ret;
 }
 
@@ -81,23 +87,27 @@ int sieve_counterpass(unsigned char *from, unsigned char *in) {
 int sieve_extract(unsigned char *from, unsigned char *to) {
 	int i, j;
 	int asd;
+	char foundflag = 0;
 	for (j = 0; j < HEIGHT; j++) {
 		for (i = 0; i < WIDTH; i++) {
 			if (at(from, i, j)) {
 				clear_at(from, i, j);
 				set_at(to, i, j);
+				tempj = j;
+				tempi = i;
 				j = HEIGHT;
 				i = WIDTH;
+				foundflag = 1;
 			}
 		}
 	}
-	if (j == HEIGHT && WIDTH == i)
+	if (!foundflag)
 		return 1;
 
-	do {
-		asd = sieve_pass(from, to);
+	do { // XXX useless with recursive pass, but needs to return iterative so it stays
+		asd = sieve_pass(from, to, tempi, tempj);
 		if (asd == MOREPASS) {
-			asd = sieve_counterpass(from, to);
+			asd = sieve_counterpass(from, to, tempi, tempj);
 		}
 	} while (asd == MOREPASS);
 	return 0;
