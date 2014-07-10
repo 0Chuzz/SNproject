@@ -9,9 +9,10 @@
 #define PBMDECODER_H_
 
 #include<stdlib.h>
+#include "utils.h"
 
-
-int decodepbm(unsigned char *buff, int w, int h, FILE* f);
+// legge i file in formato pbm, salva in buff
+int decodepbm(bitimg_t buff[], int w, int h, FILE* f);
 
 
 #endif /* PBMDECODER_H_ */

@@ -13,10 +13,10 @@
 #define MOREPASS 1
 
 static int tempi, tempj;
-int sieve_pass(unsigned char *from, unsigned char *in, int starti, int startj);
-int sieve_counterpass(unsigned char *from, unsigned char *in, int starti, int startj);
+static int sieve_pass(bitimg_t *from, bitimg_t *in, int starti, int startj);
+static int sieve_counterpass(bitimg_t *from, bitimg_t *in, int starti, int startj);
 
-int sieve_pass(unsigned char *from, unsigned char *in, int starti, int startj) {
+static int sieve_pass(bitimg_t *from, bitimg_t *in, int starti, int startj) {
 	int i, j;
 	unsigned char endflag = 0;
 	int ret = ENDPASS;
@@ -51,7 +51,7 @@ int sieve_pass(unsigned char *from, unsigned char *in, int starti, int startj) {
 #define RIGHT(buff) ((i < WIDTH - 1)? at(buff, i+1, j) : 0)
 #define DOWN(buff) ((j < HEIGHT - 1)? at(buff, i, j+1) : 0)
 
-int sieve_counterpass(unsigned char *from, unsigned char *in, int starti, int startj) {
+static int sieve_counterpass(bitimg_t *from, bitimg_t *in, int starti, int startj) {
 	int i, j;
 	unsigned char endflag = 0;
 	int ret = ENDPASS;
@@ -84,7 +84,7 @@ int sieve_counterpass(unsigned char *from, unsigned char *in, int starti, int st
 }
 
 
-int sieve_extract(unsigned char *from, unsigned char *to) {
+int sieve_extract(bitimg_t *from, bitimg_t *to) {
 	int i, j;
 	int asd;
 	char foundflag = 0;
@@ -113,7 +113,7 @@ int sieve_extract(unsigned char *from, unsigned char *to) {
 	return 0;
 }
 
-void sieveLabel(unsigned char *expanded, unsigned char *bw) {
+void sieveLabel(label_t *expanded, bitimg_t *bw) {
 	unsigned char to[BYTES_FOR(WIDTH) * HEIGHT];
 	int i, j;
 	unsigned char label = 1;

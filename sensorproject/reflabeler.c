@@ -8,7 +8,7 @@
 #include "ppmencoder.h"
 #include "imageiter.h"
 
-unsigned char * reflabel(unsigned char *dst, unsigned char *src)
+int reflabel(label_t *dst, bitimg_t *src)
 {
 	int i,j;
 	int used = 1;

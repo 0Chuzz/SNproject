@@ -6,8 +6,12 @@
  */
 #ifndef SIEVELABELER_H_
 #define SIEVELABELER_H_
+#include "utils.h"
 
-int sieve_extract(unsigned char *from, unsigned char *to);
-void sieveLabel(unsigned char *expanded, unsigned char *bw);
+// estrai da immagine from una singola componente connessa, salva dentro to
+int sieve_extract(bitimg_t from[], bitimg_t to[]);
+
+// usa sieve_extract per etichettare tutte le componenti
+void sieveLabel(label_t expanded[], bitimg_t bw[]);
 
 #endif

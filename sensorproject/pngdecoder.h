@@ -7,7 +7,9 @@
 
 #ifndef PNGDECODER_H_
 #define PNGDECODER_H_
+#include "utils.h"
 
-int decodePng(const char filename[], unsigned char buff[], int w, int h);
+// legge file in formato png
+int decodePng(const char filename[], bitimg_t buff[], int w, int h);
 
 #endif /* PNGDECODER_H_ */

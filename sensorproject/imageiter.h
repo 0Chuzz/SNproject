@@ -3,6 +3,8 @@
  *
  *  Created on: May 31, 2014
  *      Author: chuzz
+ *
+ *       IGNORA iteratore per bit ma non lo uso piu
  */
 
 #ifndef IMAGEITER_H_

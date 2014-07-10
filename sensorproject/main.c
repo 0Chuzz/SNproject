@@ -8,20 +8,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
 #include "pbmdecoder.h"
 #include "pngdecoder.h"
 #include "ppmencoder.h"
 #include "reflabeler.h"
 #include "sievelabeler.h"
 
-static unsigned char bitbuffer[320 * 240 / 8];
-static unsigned char expanded[320 * 240];
 
+// buffer con immagine B/N, 1 bit per pixel
+static bitimg_t bitbuffer[320 * 240 / 8];
+
+// buffer etichette finali 8 bit per pixel
+static label_t expanded[320 * 240];
+
+
+// argv[1] file da leggere
 int main(int argn, char *argv[]) {
 	FILE *f;
-	unsigned char *asd;
 	//char filename[2048];
 	unsigned char *extension = argv[1] + strlen(argv[1]) - 4;
+
+
 	if (!strcmp(extension, ".pbm")) {
 		f = fopen(argv[1], "r");
 		decodepbm(bitbuffer, 320, 240, f);
@@ -33,17 +41,19 @@ int main(int argn, char *argv[]) {
 		printf("error file format");
 		exit(1);
 	}
-	asd = bitbuffer;
+
 
 	//strcpy(filename, argv[1]);
 	//strcat(filename, "-labeled.ppm");
-	f = fopen("testunlabeled.pbm", "w");
-	fwrite("P4\n320 240\n", 11, 1, f);
-	fwrite(asd, 320 * 240 / 8, 1, f);
-	fclose(f);
+
+	dump_bitimg("testunlabeled.pbm", bitbuffer);
+
+
 	//expandBW(expanded, asd, 320, 240);
 	//reflabel(expanded, asd);
-	sieveLabel(expanded, asd);
-	saveLabeled("testlabeled.ppm", expanded, 320, 240);
+	sieveLabel(expanded, bitbuffer);
+
+	saveLabeled("testlabeled.ppm", expanded, WIDTH, HEIGHT);
+
 	return 0;
 }

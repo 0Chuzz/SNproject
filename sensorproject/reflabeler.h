@@ -8,6 +8,9 @@
 #ifndef REFLABELER_H_
 #define REFLABELER_H_
 
-int reflabel(unsigned char *dst, unsigned char *src);
+#include "utils.h"
+
+// applica algoritmo di reference, su src, scrivi su dst
+int reflabel(label_t dst[], bitimg_t src[]);
 
 #endif /* REFLABELER_H_ */
