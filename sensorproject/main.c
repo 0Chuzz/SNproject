@@ -14,6 +14,7 @@
 #include "ppmencoder.h"
 #include "reflabeler.h"
 #include "sievelabeler.h"
+#include "labirinthlabeler.h"
 
 
 // buffer con immagine B/N, 1 bit per pixel
@@ -51,7 +52,8 @@ int main(int argn, char *argv[]) {
 
 	//expandBW(expanded, asd, 320, 240);
 	//reflabel(expanded, asd);
-	sieveLabel(expanded, bitbuffer);
+	//sieveLabel(expanded, bitbuffer);
+	labirLabel(expanded, bitbuffer);
 
 	saveLabeled("testlabeled.ppm", expanded, WIDTH, HEIGHT);
 

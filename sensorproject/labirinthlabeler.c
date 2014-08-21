@@ -16,12 +16,50 @@ typedef enum {
 	UP,
 	RIGHT,
 	DOWN,
-	LEFT
+	LEFT,
+	NUM_DIRS
 } dir_t;
+
+#define MOVE_DIR(dir) do{\
+	switch(dir){\
+	case UP : j--;break;\
+	case RIGHT: i--;break;\
+	case DOWN: j++; break;\
+	case LEFT: i++; break;\
+	case NUM_DIRS: break;\
+	}} while (0)
+
+
+int at_dir(bitimg_t *buff, int i, int j, dir_t dir){
+	MOVE_DIR(dir);
+	return at(buff, i, j);
+}
+
+dir_t rightmost_unvisited(bitimg_t *from, bitimg_t *to, int i, int j, dir_t dir){
+	dir_t ret = (dir +1) % NUM_DIRS;
+	int x;
+	for (x= 0; x < 4;ret = (ret - 1) % NUM_DIRS, x++){
+		if (at_dir(from, i, j, ret) && !at_dir(to, i, j, ret)){
+			return ret;
+		}
+	}
+	return NUM_DIRS;
+}
+
+dir_t leftmost_visited(bitimg_t *from, bitimg_t *to, int i, int j, dir_t dir){
+	dir_t ret = (dir -1) % NUM_DIRS;
+	int x;
+	for (x= 0; x < 4;ret = (ret + 1) % NUM_DIRS, x++){
+		if (at_dir(from, i, j, ret) && at_dir(to, i, j, ret)){
+			return ret;
+		}
+	}
+	return NUM_DIRS;
+}
 
 int labir_extract(bitimg_t *from, bitimg_t *to){
 	int i, j;
-	dir_t dir = DOWN;
+	dir_t dir = RIGHT, newdir;
 	for (j = 0; j < HEIGHT; j++) {
 		for (i = 0; i < WIDTH; i++) {
 			if (at(from, i, j)) {
@@ -32,15 +70,28 @@ int labir_extract(bitimg_t *from, bitimg_t *to){
 	return 1;
 	found:
 	if(at(to, i, j)){
+		newdir = rightmost_unvisited(from, to, i, j, dir);
+		if(newdir != NUM_DIRS){
+			dir = newdir;
+			MOVE_DIR(dir);
+			goto found;
+		}
 		clear_at(from, i, j);
+		newdir = leftmost_visited(from, to, i, j, dir);
+		if (newdir != NUM_DIRS){
+			dir = newdir;
+			MOVE_DIR(dir);
+			goto found;
+		}
 	} else {
 		set_at(to, i, j);
-	}
-	/*
-	if(check_dir(to, dir) || check_dir(to,dir)){
-		move_dir(dir);
+		newdir = rightmost_unvisited(from, to, i, j, dir);
+		if(newdir != NUM_DIRS){
+			dir = newdir;
+			MOVE_DIR(dir);
+		}
 		goto found;
-	}*/
+	}
 
 	return 0;
 
