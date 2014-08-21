@@ -32,13 +32,14 @@ typedef enum {
 
 int at_dir(bitimg_t *buff, int i, int j, dir_t dir){
 	MOVE_DIR(dir);
+	if (i < 0 || i >= WIDTH || j < 0 || j >= HEIGHT) return 0;
 	return at(buff, i, j);
 }
 
 dir_t rightmost_unvisited(bitimg_t *from, bitimg_t *to, int i, int j, dir_t dir){
 	dir_t ret = (dir +1) % NUM_DIRS;
 	int x;
-	for (x= 0; x < 4;ret = (ret - 1) % NUM_DIRS, x++){
+	for (x= 0; x < 3;ret = (ret - 1) % NUM_DIRS, x++){
 		if (at_dir(from, i, j, ret) && !at_dir(to, i, j, ret)){
 			return ret;
 		}
@@ -47,7 +48,7 @@ dir_t rightmost_unvisited(bitimg_t *from, bitimg_t *to, int i, int j, dir_t dir)
 }
 
 dir_t leftmost_visited(bitimg_t *from, bitimg_t *to, int i, int j, dir_t dir){
-	dir_t ret = (dir -1) % NUM_DIRS;
+	dir_t ret = (dir - 2) % NUM_DIRS;
 	int x;
 	for (x= 0; x < 4;ret = (ret + 1) % NUM_DIRS, x++){
 		if (at_dir(from, i, j, ret) && at_dir(to, i, j, ret)){
@@ -69,30 +70,23 @@ int labir_extract(bitimg_t *from, bitimg_t *to){
 	}
 	return 1;
 	found:
-	if(at(to, i, j)){
-		newdir = rightmost_unvisited(from, to, i, j, dir);
-		if(newdir != NUM_DIRS){
-			dir = newdir;
-			MOVE_DIR(dir);
-			goto found;
-		}
-		clear_at(from, i, j);
-		newdir = leftmost_visited(from, to, i, j, dir);
-		if (newdir != NUM_DIRS){
-			dir = newdir;
-			MOVE_DIR(dir);
-			goto found;
-		}
-	} else {
-		set_at(to, i, j);
-		newdir = rightmost_unvisited(from, to, i, j, dir);
-		if(newdir != NUM_DIRS){
-			dir = newdir;
-			MOVE_DIR(dir);
-		}
+	set_at(to, i, j);
+
+	check_unvisited:
+	newdir = rightmost_unvisited(from, to, i, j, dir);
+	if(newdir != NUM_DIRS){
+		dir = newdir;
+		MOVE_DIR(dir);
 		goto found;
 	}
 
+	clear_at(from, i, j);
+	newdir = leftmost_visited(from, to, i, j, dir);
+	if (newdir != NUM_DIRS){
+			dir = newdir;
+			MOVE_DIR(dir);
+			goto check_unvisited;
+	}
 	return 0;
 
 }
