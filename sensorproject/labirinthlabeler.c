@@ -47,20 +47,43 @@ dir_t rightmost_unvisited(bitimg_t *from, bitimg_t *to, int i, int j, dir_t dir)
 	return NUM_DIRS;
 }
 
-dir_t leftmost_visited(bitimg_t *from, bitimg_t *to, int i, int j, dir_t dir){
-	dir_t ret = (dir - 2) % NUM_DIRS;
-	int x;
-	for (x= 0; x < 4;ret = (ret + 1) % NUM_DIRS, x++){
-		if (at_dir(from, i, j, ret) && at_dir(to, i, j, ret)){
-			return ret;
-		}
+inline static void write_dir(dir_t dir, bitimg_t *lr, bitimg_t *ud, int i, int j){
+	switch (dir){
+	case UP: clear_at(ud, i, j); clear_at(lr, i,j); break;
+	case RIGHT: clear_at(ud, i, j); set_at(lr, i,j); break;
+	case DOWN: set_at(ud, i, j); clear_at(lr, i,j); break;
+	case LEFT: set_at(ud, i, j); set_at(lr, i,j); break;
+	}
+
+}
+
+inline static dir_t opposite(dir_t dir){
+	switch (dir){
+	case UP: return DOWN;
+	case RIGHT: return LEFT;
+	case DOWN: return UP;
+	case LEFT: return RIGHT;
 	}
 	return NUM_DIRS;
 }
 
+inline static dir_t old_dir(bitimg_t *lr, bitimg_t *ud, int i, int j){
+	if (!at(ud, i, j)){
+		if (!at(lr, i, j)) 	return UP;
+		else				return RIGHT;
+	} else {
+		if (!at(lr, i, j)) 	return DOWN;
+		else				return LEFT;
+	}
+}
+
+
 int labir_extract(bitimg_t *from, bitimg_t *to){
 	int i, j;
 	dir_t dir = RIGHT, newdir;
+	bitimg_t lr[BYTES_FOR(WIDTH) * HEIGHT];
+	bitimg_t ud[BYTES_FOR(WIDTH) * HEIGHT];
+
 	for (j = 0; j < HEIGHT; j++) {
 		for (i = 0; i < WIDTH; i++) {
 			if (at(from, i, j)) {
@@ -71,6 +94,7 @@ int labir_extract(bitimg_t *from, bitimg_t *to){
 	return 1;
 	found:
 	set_at(to, i, j);
+	write_dir(dir, lr, ud, i, j);
 
 	check_unvisited:
 	newdir = rightmost_unvisited(from, to, i, j, dir);
@@ -81,12 +105,9 @@ int labir_extract(bitimg_t *from, bitimg_t *to){
 	}
 
 	clear_at(from, i, j);
-	newdir = leftmost_visited(from, to, i, j, dir);
-	if (newdir != NUM_DIRS){
-			dir = newdir;
-			MOVE_DIR(dir);
-			goto check_unvisited;
-	}
+	MOVE_DIR(opposite(dir));
+	dir = old_dir(lr, ud, i, j);
+	if (at(from, i, j)) goto check_unvisited;
 	return 0;
 
 }
