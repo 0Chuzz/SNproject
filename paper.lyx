@@ -1,0 +1,140 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+problem
+\end_layout
+
+\begin_layout Standard
+Perform computer vision task in embedded sistem, like connected component
+ labeling.
+ Connected component labeling algorithms works on 320x240 BW images, splits
+ different shapes.
+ at least 9600 bytes are needed to store one image, and on embedded system
+ we can suppose from 256k to 64k of memory for the whole CV process.
+ This is a survey on algorithms that allows component labeling to be performed
+ using less than 20k of memory.
+ Also cpu resources are limited
+\end_layout
+
+\begin_layout Section
+first implementation
+\end_layout
+
+\begin_layout Standard
+First implementation from paper XXX, the algorithm scans the image and perform
+ an union set, where a different label is assigned to each pixel and adjacent
+ pixel are joined in a single set.
+ This algorithm has high memory use, mainly caused by the high number of
+ temporary labels required, and is limited n* of connected components.
+\end_layout
+
+\begin_layout Section
+firt solution
+\end_layout
+
+\begin_layout Standard
+multipass use only 2 BW buffers.
+ disconnected elements, instead of getting a new label, are ignored.
+ in case the algorithm detects that some connected pixels are ignored after
+ all, it performs a second pass in the opposite direction.
+ This continues until no connected pixels are left.
+ The resulting shape is then processed separately, deleted from the started
+ image and then the next shape is extracted.
+ The multiple passes may cause excessive cpu usage, so this technique can
+ be hybridized with the previous algoritm, using a low number of labels,
+ and using multiple passes when they are not enough.
+\end_layout
+
+\begin_layout Section
+second solution
+\end_layout
+
+\begin_layout Standard
+This algorithm requires 2 BW buffers, 2 BW temporary on the stack.
+ After finding a pixel it begins to move through the whole shape with a
+ simple algorithm, move to the rightmost unvisited pixel.
+ The two temporary buffers are used to store the path taken, in order to
+ allow backtracking.
+ Because of this it uses more memory, but each shape pixel is visited from
+ two to four times.
+\end_layout
+
+\begin_layout Section
+future work
+\end_layout
+
+\begin_layout Standard
+algorithm to exploit cpu word size instead of bit by bit checks.
+ interlaced algorithms (check 1 every x pixels then merge).
+\end_layout
+
+\end_body
+\end_document
