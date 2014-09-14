@@ -194,49 +194,41 @@ void correctAll(int tracks, int blobs, kalmanTrack states[NUM_BLOBS_MAX], point 
 }
 
 int efficientKalmanCentroids(int width, int height, bitimg_t image[WIDTH*HEIGHT/8], point centroids[NUM_BLOBS_MAX]) {
-	bitimg_t temp[WIDTH*HEIGHT/8];
+	bitimg_t temp[BYTES_FOR(WIDTH)*HEIGHT];
 	int numCentroids = 0;
 	int k;
 	for(k = 0; k < sizeof temp; k++) temp[k] = 0;
-	while(!labir_extract(image, temp) && numCentroids < NUM_BLOBS_MAX) {
-		unsigned int count = 0;
-		unsigned int x_coord = 0;
-		unsigned int y_coord = 0;
-		int i,j;
-		for(j = 0; j < height; j++) {
-			for (i = 0; i < width; i++) {
-				if(at(temp, i, j)) {
-					count++;
-					x_coord += i;
-					y_coord += j;
-				}
-			}
-
-		}
-		centroids[numCentroids].X = x_coord/count;
-		centroids[numCentroids].Y = y_coord/count;
-		for(k = 0; k < sizeof temp; k++) temp[i] = 0;
-		numCentroids++;
-	}
-	/*
-	bitimg_t to [BYTES_FOR(WIDTH) * HEIGHT];
-	int i,j;
-	unsigned char label = 1;
-
-	for(i = 0; i < sizeof to; i++) to[i] = 0;
-
-	while (!labir_extract(image, to)) {
+	while (!labir_extract(image, temp) && numCentroids < NUM_BLOBS_MAX) {
+		int j, i;
+		int x = 0, y = 0, c = 0;
+		unsigned short minX = width+1;
+		unsigned short minY = height+1;
+		unsigned short maxX = 0;
+		unsigned short maxY = 0;
+		/** Identify centroid and bounding box for the blob*/
 		for (j = 0; j < HEIGHT; j++) {
 			for (i = 0; i < WIDTH; i++) {
-				if (at(to, i, j)) {
-					expanded[j*WIDTH + i] = label;
+				if (at(temp, i, j)) {
+					c++;
+					x += i; y += j;
+					if(minX > i) minX = i;
+					if(minY > j) minY = j;
+					if(maxX < i) maxX = i;
+					if(maxY < j) maxY = j;
 				}
 			}
 		}
-		label++;
-		for(i = 0; i < sizeof to; i++) to[i] = 0;
-		}
-	*/
+
+		centroids[numCentroids].X = x/c;
+		centroids[numCentroids].Y = y/c;
+		centroids[numCentroids].topX = minX;
+		centroids[numCentroids].topY = minY;
+		centroids[numCentroids].botX = maxX;
+		centroids[numCentroids].botY = maxY;
+		numCentroids++;
+		for(i = 0; i < sizeof temp; i++) temp[i] = 0;
+	}
+
 	return numCentroids;
 }
 

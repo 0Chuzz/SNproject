@@ -57,6 +57,7 @@
 //#include "lwip.h"
 /* Other libraries */
 #include "util.h"
+#include "mainLaptop.h"
 
 #pragma config POSCMOD = XT
 #pragma config FNOSC = PRIPLL
@@ -167,7 +168,6 @@ EE_pic32_enableIRQ();
 }
 #include "utils.h"
 //static char mybuffer[320*240/8];
-void mainLaptop();
 
 int main(void)
 {

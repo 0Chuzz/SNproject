@@ -15,6 +15,8 @@
 typedef struct {
 	short X;
 	short Y;
+	unsigned short topX, topY;
+	unsigned short botX, botY;
 } point;
 
 
