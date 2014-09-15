@@ -1,6 +1,8 @@
 import serial
 from PIL import Image
 from PIL import ImageTk
+from PIL import ImageDraw
+from PIL.ImageColor import getrgb
 from tkFileDialog import askopenfilenames
 from Tkinter import *
 from PIL import Image, ImageTk
@@ -16,10 +18,30 @@ serial.write("aaaaaaaa")
 print serial.readline()
 root = Tkinter.Tk()
 
-labimage = ImageTk.PhotoImage("1", (320,240))
+labimage = ImageTk.PhotoImage("RGB", (320,240))
 lab = Tkinter.Label(root, image=labimage)
 lab.pack()
 listimgs = askopenfilenames(parent=root)
+try:
+        listimgs = listimgs.split(" ")
+except:
+        pass
+
+colors = [
+        (255,0,0)
+        ,(0,255,0)
+        ,(0,0,255)
+        ,(0,255,255)
+        ,(255,0,255)
+        ,(255,255, 0)
+        ,(0,0,125)
+        ,(125,0,0)
+        ,(0,125,0)
+        ,(0,125,125)
+        ,(125,0,125)
+        ,(125,125,0)
+        ,(125,0,255)
+        ]
 
 class MyApp (threading.Thread):
         def run(self):
@@ -43,22 +65,26 @@ class MyApp (threading.Thread):
                         boundingBoxes =  []
                         print "just readed ", readedresponse
                         while readedresponse != "$":
-                                ident = serial.read(3);
-                                topX = serial.read(3);
-                                topY = serial.read(3);
-                                botX = serial.read(3);
-                                botY = serial.read(3);
+                                ident = serial.read(3).strip();
+                                topX = int(serial.read(3))
+                                topY = int(serial.read(3))
+                                botX = int(serial.read(3))
+                                botY = int(serial.read(3))
                                 boundingBoxes.append((ident, topX, topY, botX, botY))
                                 readedresponse = serial.read(1)
-                        for bbox in boundingBoxes:
-                                print bbox
+                                
+                        img = img.convert("RGB")
+                        drw = ImageDraw.Draw(img)
                         
-                        #trackedImage.createRectangle(10, 10, 10, outline="red")
-                        #imgb =  serial.read(320*240/8- 1) + " "
-                        #img2 = Image.frombytes("1", (320,240), imgb)
-                        #serial.read(1);
-                        #print "received"
-                        #labimage.paste(img2)
+                        for bbox in boundingBoxes:
+                                ident, topX, topY, botX, botY = bbox
+                                col = colors[int(ident)%len(colors)]
+                                drw.rectangle([(topX, topY), (botX, botY)], outline=col)
+                                drw.text(((topX + botX)/2, (topY+botY)/2), ident, fill=col)
+                                print bbox
+
+                        labimage.paste(img)
+
                 sleep(5)
                 exit()
 
