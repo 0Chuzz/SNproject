@@ -148,7 +148,7 @@ int mainLaptop(int argn, char *argv[]) {
 	#else
 	readed = myread(bitbuffer, 320*240/8);
 	myprintf("%16d", readed);
-	myprintf("I readed %d bytes in total. Lol.\n",readed);
+
 	#endif
 	int numTracks = efficientKalmanCentroids(WIDTH, HEIGHT,bitbuffer, centroids);
 	for (i = 0; i < numTracks; i++) {
@@ -186,8 +186,7 @@ int mainLaptop(int argn, char *argv[]) {
 			fclose(f);
 		} else decodePng(outfile, bitbuffer, 320, 240);
 	#endif
-	/* Apply labeling*/
-		//myprintf("PREDICTION STARTS");
+
 	#ifdef TIME_CHECK
 		EE_UINT32 time_tot, time1;
 		time_tot = time1 = get_time_stamp();
@@ -196,29 +195,21 @@ int mainLaptop(int argn, char *argv[]) {
 	#ifdef TIME_CHECK
 		myprintf("Prediction\t%d\n", get_time_stamp() - time1);
 	#endif
-		//myprintf("PREDICTION ENDS");
-	#ifndef FINAL
-		for(i = 0; i < numTracks; i++) {
-			printf("%d has foreseen position (%d,%d) and speed (%.2f, %.2f)\n", states[i].id, states[i].posX, states[i].posY, states[i].velX, states[i].velY);
-		}
-	#endif
-		/** Calculate new centroids */
-		//myprintf("Centroid calculation starts\n");
+
 	#ifdef TIME_CHECK
 		time1 = get_time_stamp();
 	#endif
+
 		int numBlobs = efficientKalmanCentroids(WIDTH, HEIGHT, bitbuffer, centroids);
-	#ifdef TIME_CHECK
-		myprintf("Labelling+Centroids\t%d\n", get_time_stamp() - time1);
-	#endif
-		//myprintf("Centroids calculation ended\n");
-		//for(i = 0; i < numBlobs; i++) {
-		//	myprintf("%d blob has (%d, %d) and bounding box (%d,%d), (%d,%d)\n", i, centroids[i].X, centroids[i].Y, centroids[i].topX, centroids[i].topY, centroids[i].botX, centroids[i].botY);
-		//}
+
+		#ifdef TIME_CHECK
+			myprintf("Labelling+Centroids\t%d\n", get_time_stamp() - time1);
+		#endif
+
 	int permutation[NUM_BLOBS_MAX];
-	for(i = 0; i < numBlobs; i++) permutation[i] = -1;
+	for(i = 0; i < NUM_BLOBS_MAX; i++) permutation[i] = -1;
 	short unassignedCols[NUM_BLOBS_MAX], unassignedColNum;
-	//myprintf("Assignment starts\n");
+
 	#ifdef TIME_CHECK
 		time1 = get_time_stamp();
 	#endif
@@ -226,19 +217,8 @@ int mainLaptop(int argn, char *argv[]) {
 	#ifdef TIME_CHECK
 		myprintf("Assignment\t%d\n", get_time_stamp() - time1);
 	#endif
-	//myprintf("Assignment ended\n");
-	/** Assignment has been found: show */
-	#ifndef FINAL
-		if(!isPermutation(numBlobs, permutation)) exit(0);
 
-		int colorPermutation[numBlobs];
-		for(i = 0; i < numBlobs; i++) {
-			colorPermutation[i] = states[permutation[i]].id;
-		}
-	#endif
-	#ifndef FINAL
-		if(!isPermutation(numBlobs, permutation)) exit(0);
-	#endif
+
 	#ifdef TIME_CHECK
 		time1 = get_time_stamp();
 	#endif
@@ -271,24 +251,15 @@ int mainLaptop(int argn, char *argv[]) {
 		printf("%s\n", outfile);
 		saveLabeled(outfile, permute(WIDTH, HEIGHT, numBlobs, expanded, permutation), WIDTH, HEIGHT);
 	#else
-		//unsigned char finalImg[320*240+1];
-		//copyPermute( numBlobs, expanded, finalImg, permutation);
-		//myprintf("Getting ready to send image in output..\n");
-		/*
-		for (i = 0; i < numTracks; i++) {
-			set_at(bitbuffer, states[i].posX, states[i].posY);
-		}*/
-		//myprintf("Image is ready to be send \n");
 
-
-		//Instead of image, send quintuple in the form:
+		//Send quintuple in the form:
 		// <idT, x1,y1, x2, y2> for the bounding box of each blob recognized
 		myprintf("Total\t%d\n", get_time_stamp() - time_tot);
 		myprintf("$");
 
 		for(i = 0; i < numBlobs; i++) {
 			if(permutation[i] >= 0) {
-				myprintf(" ");
+				myprintf(" "); //Continue reading
 				myprintf("%3d", states[permutation[i]].id);
 				myprintf("%3d", centroids[i].topX);
 				myprintf("%3d", centroids[i].topY);
@@ -297,126 +268,9 @@ int mainLaptop(int argn, char *argv[]) {
 			}
 		}
 		myprintf("$");
-	    //mywrite(bitbuffer, 320*240/8);
-
 	#endif
 		stream_element++;
 
 	}
 	return 0;
 }
-	/*
-
-	//the noise in the system
-	float Q = 2;
-	float R = 1;
-
-	initializeDirectory(argv[1], argv[2], atoi(argv[3]), argv[4]);
-	int stream_element = 0;
-	FILE *f;
-	char outfile[1100];
-	/** First reading: used for the first estimation
-	int i;
-	if(!nextImageFile(outfile)){
-		printf("Empty Stream \n");
-		exit(-1);
-	}
-
-	if(isPBM(outfile)) {
-		f = fopen(outfile, "r");
-		decodepbm(bitbuffer, 320, 240, f);
-		fclose(f);
-	}else decodePng(outfile, bitbuffer, 320, 240);
-
-	labirLabel(expanded, bitbuffer);
-
-	int numTracks = kalmanCentroids(expanded, WIDTH, HEIGHT, centroids);
-
-	for (i = 0; i < numTracks; i++) {
-		states[i].posX = centroids[i].X;
-		states[i].posY = centroids[i].Y;
-		states[i].velX = 0;
-		states[i].velY = 0;
-		states[i].id = assign(); //assign an identifier.
-		states[i].age = 1;
-		states[i].totalVisibleCount = 1;
-	}
-	//saveLabeled("/tmp/start.ppm", addCentroids(expanded, states, centroids, numTracks), WIDTH, HEIGHT);
-	//Now build the system after the centroids!
-
-	while(nextImageFile(outfile)) { //Inside we have the stream..!
-
-		/** Read new file
-		if(isPBM(outfile)) { //remember to optimize
-			f = fopen(outfile, "r");
-			decodepbm(bitbuffer, 320, 240, f);
-			fclose(f);
-		} else decodePng(outfile, bitbuffer, 320, 240);
-
-		/** Apply labeling
-		labirLabel(expanded, bitbuffer);
-
-		predict(states, Q, R, &numTracks); //Predict also eliminates tracks lost.
-		for(i = 0; i < numTracks; i++) {
-			printf("Track %d prediction is (%d,%d)\n", states[i].id, states[i].posX, states[i].posY);
-		}
-
-		int numBlobs = kalmanCentroids(expanded, WIDTH, HEIGHT, centroids);
-		for(i = 0; i < numBlobs; i++) {
-				printf("Blob %d: (%d, %d)\n", i, centroids[i].X, centroids[i].Y);
-		}
-
-		float costMatrix[numTracks][numBlobs];
-		int permutation[NUM_BLOBS_MAX];
-		for(i = 0; i < numBlobs; i++) permutation[i] = 0;
-		//Compute the cost matrix
-		short unassignedRows[numTracks], unassignedCols[numBlobs], unassignedRowNum, unassignedColNum;
-		findAssignment(numTracks, numBlobs, states, centroids, 70, permutation, unassignedCols, &unassignedColNum);
-	/*
-		computeCostMatrix(states, numTracks, centroids, numBlobs, costMatrix);
-		minAssignHeuristic(numTracks, numBlobs, costMatrix, permutation, unassignedRows, &unassignedRowNum, unassignedCols, &unassignedColNum);
-
-		/** Deal with unassigned tracks ?
-		 * 1. Increment invisible count --> already done in predict
-		 * 2. Increment age (it is done for all) --> already done in predict
-		 * ---> Seems like there's nothing to be done..!
-		 *  */
-
-		/** Deal with unassigned blobs
-		 * If a blob was not assigned, we need to create a new track for it.
-		 * */
-
-		/** Recalculate permutation, being aware that if the age is less than the
-		 * treshold, we shall not do it!
-
-		if(!isPermutation(numBlobs, permutation)) exit(0);
-
-		//Update current number of tracks..!
-		correct(states, permutation, centroids, numTracks, numBlobs);
-		printf("Need to assign %d cols!\n", unassignedColNum);
-		for(i = 0; i < unassignedColNum; i++) {
-			states[numTracks+i].id = assign(); //assign is broken, fix it.
-			states[numTracks+i].posX = centroids[unassignedCols[i]].X;
-			states[numTracks+i].posY = centroids[unassignedCols[i]].Y;
-			states[numTracks+i].velX = states[numTracks+i].velY = 0;
-			states[numTracks+i].consecutiveInvisibleCount = 1;
-			states[numTracks+i].age++;
-		}
-		printf("assigned\n");
-		numTracks += unassignedColNum;
-		sprintf(outfile, "%s/%d.ppm", argv[5], stream_element);
-		printf("assigned\n");
-		saveLabeled(outfile, permute(expanded, permutation, WIDTH, HEIGHT), WIDTH, HEIGHT);
-
-		for(i = 0; i < 320*240;i++) {
-			expanded[i] = 0;
-		}
-		stream_element++;
-		//if(stream_element > 15) return 0;
-	}
-
-	printf("Finished!\n");
-	return 0;
-
-
-	return 0;*/

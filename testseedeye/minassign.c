@@ -61,9 +61,7 @@ int findAssignment(int rows, int cols, kalmanTrack predictions[NUM_BLOBS_MAX], p
 	short assignedR[rows], assignedC[cols];
 	for(i = 0; i < rows; i++) assignedR[i] = 0;
 	for(i = 0; i < cols; i++) assignedC[i] = 0;
-	assignedR[0] = 1;
-	assignedC[0] = 1;
-	permutation[0] = 0;
+
 	for(i = 0; i < rows*cols; i++) {
 		if(distances[i].cost > unassignmentCost) break;
 		if (assignedR[distances[i].start] == 0 && assignedC[distances[i].end] == 0) {

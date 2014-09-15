@@ -7,7 +7,6 @@
 #include "utils.h"
 #include "kalman2.h"
 #include "labirinthlabeler.h"
-//#include "sievelabeler.h"
 
 #define KALMAN_OPTIMIZE 1
 #define PIC_VERSION
@@ -57,8 +56,8 @@ static inline void matrixproduct(float m1[4][4], float m2[4][4], float result[4]
 /** Uses aux. space O(N) and 128 operations */
 static inline void unoptimizedPredictCovariance(float cov[4][4]) {
 	float temp[4][4];
-	matrixproduct(transitionMatrix, cov, temp);
-	matrixproduct( cov, transitionMatrixT, cov);
+	matrixproduct( transitionMatrix, cov, temp);
+	matrixproduct(cov, transitionMatrixT, cov);
 }
 /** Uses aux. space O(N) and 32 operations */
 static inline void optimizedPredictCovariance(float cov[4][4]) {
@@ -139,13 +138,14 @@ void update(kalmanTrack* t, point measure) {
 	int i, j;
 	/** Vect is Y */
 
-	float y[2] = { measure.X - t->posX,measure.Y - t->posY};
+	int y[2] = { measure.X - t->posX, measure.Y - t->posY};
 	//Temp = S = H x Pk x H^t + R (H is I_2)
 	for(i = 0; i < 4; i++) {
 		for(j = 0; j < 4; j++) {
-			temp[i][j] = (t->cov[i][j] + measurementNoiseM[i][j]);
+			if(i > 2 || j > 2) temp[i][j] = 0;
+			else temp[i][j] = (t->cov[i][j] + measurementNoiseM[i][j]);
 		}
-		if(i > 2 || j > 2) temp[i][j] = 0;
+
 	}
 
 	float gain[4][2] = {
@@ -161,9 +161,13 @@ void update(kalmanTrack* t, point measure) {
 		for(j = 0; j < 2; j++)	gain[i][j] = gain[i][j] * l;
 	//Now gain is K, use it to correct.
 	t->posX += gain[0][0]*y[0] + gain[0][1]*y[1];
-	t->posY += gain[1][0]*y[0] + gain[1][1]*y[1];
+	//myprintf("Y updates as %d %.5f %d %.5f %d\n", t->posY, gain[1][0], y[0], gain[1][1], y[1]);
+	int Y_update = (int)(gain[1][0]*y[0] + gain[1][1]*y[1]);
+	//myprintf("Y upd %.5f \n", gain[1][0]*y[0] + gain[1][1]*y[1]);
+	t->posY += Y_update;
 	t->velX += gain[2][0]*y[0] + gain[2][1]*y[1];
 	t->velY += gain[3][0]*y[0] + gain[3][1]*y[1];
+
 	//Update the covariance matrix.
 
 	//temp is now (I-KH) ->  Identity - gain*I_2
@@ -180,6 +184,9 @@ void update(kalmanTrack* t, point measure) {
 		for(j = 0; j < 4; j++)
 			temp2[i][j] = t->cov[i][j];
 	matrixproduct(temp, temp2, t->cov);
+	for(i = 0; i < 4; i++)
+		for(j = 0; j < 4; j++)
+			printf("cov %d %d: %.40f\n", i, j, t->cov[i][j]);
 	//now t->cov = P = (I -KH)P
 }
 
