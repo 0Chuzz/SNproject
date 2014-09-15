@@ -36,6 +36,7 @@ static kalmanTrack states[NUM_BLOBS_MAX];
 
 static point centroids[NUM_BLOBS_MAX];
 
+static int newId = 0;
 
 #ifndef FINAL
 int isPermutation(size_t permSize, int permutation[]) {
@@ -156,7 +157,7 @@ int mainLaptop(int argn, char *argv[]) {
 		states[i].posY = centroids[i].Y;
 		states[i].velX = 0;
 		states[i].velY = 0;
-		states[i].id = assign(); //assign an identifier.
+		states[i].id = newId++; //assign an identifier.
 		states[i].age = 1;
 		states[i].totalVisibleCount = 0;
 		states[i].consecutiveInvisibleCount = 1;
@@ -230,7 +231,7 @@ int mainLaptop(int argn, char *argv[]) {
 		/** New assignments for the remaining */
 		//printf("Need to assign new %d blobs:\n", unassignedColNum);
 		for(i = 0; i < unassignedColNum; i++) {
-			states[numTracks+i].id = assign(); //assign is broken, fix it.
+			states[numTracks+i].id = newId++; //assign is broken, fix it.
 			states[numTracks+i].posX = centroids[unassignedCols[i]].X;
 			states[numTracks+i].posY = centroids[unassignedCols[i]].Y;
 			states[numTracks+i].velX = states[numTracks+i].velY = 0;
