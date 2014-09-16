@@ -169,9 +169,7 @@ int mainLaptop(int argn, char *argv[]) {
 		}
 	}
 	#ifdef FINAL
-	for (i = 0; i < numTracks; i++) {
-		set_at(bitbuffer, states[i].posX, states[i].posY);
-	}
+	myprintf("%d blobs detected\n", numTracks);
 	myprintf("$$");
     //mywrite(bitbuffer, 320*240/8);
 	while(1) {
@@ -194,7 +192,7 @@ int mainLaptop(int argn, char *argv[]) {
 	#endif
 		numTracks = predictAll(numTracks, states);
 	#ifdef TIME_CHECK
-		myprintf("Prediction\t%d\n", get_time_stamp() - time1);
+		myprintf("Prediction\t%d\n", elapsed_us(time1, get_time_stamp()));
 	#endif
 
 	#ifdef TIME_CHECK
@@ -204,8 +202,9 @@ int mainLaptop(int argn, char *argv[]) {
 		int numBlobs = efficientKalmanCentroids(WIDTH, HEIGHT, bitbuffer, centroids);
 
 		#ifdef TIME_CHECK
-			myprintf("Labelling+Centroids\t%d\n", get_time_stamp() - time1);
+			myprintf("Labelling+Centroids\t%d\n", elapsed_us(time1, get_time_stamp()));
 		#endif
+			myprintf("%d blobs detected\n", numTracks);
 
 	int permutation[NUM_BLOBS_MAX];
 	for(i = 0; i < NUM_BLOBS_MAX; i++) permutation[i] = -1;
@@ -216,7 +215,7 @@ int mainLaptop(int argn, char *argv[]) {
 	#endif
 	findAssignment(numTracks, numBlobs, states, centroids, 100, permutation, unassignedCols, &unassignedColNum);
 	#ifdef TIME_CHECK
-		myprintf("Assignment\t%d\n", get_time_stamp() - time1);
+		myprintf("Assignment\t%d\n", elapsed_us(time1, get_time_stamp()));
 	#endif
 
 
@@ -225,7 +224,7 @@ int mainLaptop(int argn, char *argv[]) {
 	#endif
 		correctAll(numTracks, numBlobs, states, centroids, permutation);
 	#ifdef TIME_CHECK
-		myprintf("Correction\t%d\n", get_time_stamp() - time1);
+		myprintf("Correction\t%d\n", elapsed_us(time1, get_time_stamp()));
 	#endif
 		//myprintf("Correction End\n");
 		/** New assignments for the remaining */
@@ -255,7 +254,7 @@ int mainLaptop(int argn, char *argv[]) {
 
 		//Send quintuple in the form:
 		// <idT, x1,y1, x2, y2> for the bounding box of each blob recognized
-		myprintf("Total\t%d\n", get_time_stamp() - time_tot);
+		myprintf("Total\t%d\n", elapsed_us(time_tot, get_time_stamp()));
 		myprintf("$");
 
 		for(i = 0; i < numBlobs; i++) {

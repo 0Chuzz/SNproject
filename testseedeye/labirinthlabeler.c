@@ -112,6 +112,102 @@ int labir_extract(bitimg_t *from, bitimg_t *to){
 
 }
 
+inline dir_t rightmost_unvisited2(bitimg_t *from, int i, int j, dir_t dir){
+	dir_t ret = (dir +1) % NUM_DIRS;
+	int x;
+	for (x= 0; x < 3; x++){
+		if (at_dir(from, i, j, ret)){
+			return ret;
+		}
+		ret = (ret - 1) % NUM_DIRS;
+	}
+	return NUM_DIRS;
+}
+
+static int hintX;
+static int hintY;
+
+void labir_init2(){
+	hintX = 0;
+	hintY = 0;
+}
+
+#define MOVE_DIR_UPDATE_BB(dir) do{\
+	switch(dir){\
+	case UP : j--; 	if (ty > j) ty--;break;\
+	case RIGHT: i--;if (tx > i) tx--;break;\
+	case DOWN: j++;if (by < j) by++; break;\
+	case LEFT: i++;if (bx < i) bx++; break;\
+	case NUM_DIRS: break;\
+	}} while (0)
+
+
+int labir_extract2(bitimg_t *from, int *centrX, int *centrY,
+		int *topX, int *topY, int*botX, int *botY){
+	int i, j;
+	unsigned int cx,cy,cn,tx,ty,bx,by;
+
+	cn = 0;
+	cx = 0;
+	cy = 0;
+
+	dir_t dir = RIGHT, newdir;
+	bitimg_t lr[BYTES_FOR(WIDTH) * HEIGHT];
+	bitimg_t ud[BYTES_FOR(WIDTH) * HEIGHT];
+
+	for (j = hintY; j < HEIGHT; j++) {
+		for (i = hintX; i < WIDTH; i++) {
+			if (at(from, i, j)) {
+				hintX = i;
+				hintY = j;
+				tx = i;
+				ty = j;
+				bx = i;
+				by = j;
+				//myprintf ("new blob at %d %d\n", hintX, hintY);
+				goto found2;
+			}
+		}
+		hintX = 0;
+	}
+	//myprintf("no more blobs \n");
+	return 1;
+	found2:
+	cx += i;
+	cy += j;
+	cn++;
+	clear_at(from, i, j);
+	write_dir(dir, lr, ud, i, j);
+
+	check_unvisited2:
+	newdir = rightmost_unvisited2(from, i, j, dir);
+	if(newdir != NUM_DIRS){
+		//myprintf("%d %d has unvisited neighbour at ", i, j);
+		dir = newdir;
+		MOVE_DIR_UPDATE_BB(dir);
+		//myprintf("%d %d\n", i, j);
+		goto found2;
+	}
+
+
+	if(i != hintX || j != hintY){
+		MOVE_DIR(opposite(dir));
+		dir = old_dir(lr, ud, i, j);
+		goto check_unvisited2;
+	}
+
+
+	//myprintf("end of blob big %d\n", cn);
+	*centrX = cx/cn;
+	*centrY = cy/cn;
+	*topX = tx;
+	*topY = ty;
+	*botX = bx;
+	*botY = by;
+	return 0;
+
+}
+
 void labirLabel(label_t *expanded, bitimg_t *from)
 {
 	bitimg_t to [BYTES_FOR(WIDTH) * HEIGHT];

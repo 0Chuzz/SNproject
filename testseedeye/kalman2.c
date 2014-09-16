@@ -201,39 +201,20 @@ void correctAll(int tracks, int blobs, kalmanTrack states[NUM_BLOBS_MAX], point 
 }
 
 int efficientKalmanCentroids(int width, int height, bitimg_t image[WIDTH*HEIGHT/8], point centroids[NUM_BLOBS_MAX]) {
-	bitimg_t temp[BYTES_FOR(WIDTH)*HEIGHT];
+	//bitimg_t temp[BYTES_FOR(WIDTH)*HEIGHT];
 	int numCentroids = 0;
 	int k;
-	for(k = 0; k < sizeof temp; k++) temp[k] = 0;
-	while (!labir_extract(image, temp) && numCentroids < NUM_BLOBS_MAX) {
-		int j, i;
-		int x = 0, y = 0, c = 0;
-		unsigned short minX = width+1;
-		unsigned short minY = height+1;
-		unsigned short maxX = 0;
-		unsigned short maxY = 0;
-		/** Identify centroid and bounding box for the blob*/
-		for (j = 0; j < HEIGHT; j++) {
-			for (i = 0; i < WIDTH; i++) {
-				if (at(temp, i, j)) {
-					c++;
-					x += i; y += j;
-					if(minX > i) minX = i;
-					if(minY > j) minY = j;
-					if(maxX < i) maxX = i;
-					if(maxY < j) maxY = j;
-				}
-			}
-		}
-
-		centroids[numCentroids].X = x/c;
-		centroids[numCentroids].Y = y/c;
-		centroids[numCentroids].topX = minX;
-		centroids[numCentroids].topY = minY;
-		centroids[numCentroids].botX = maxX;
-		centroids[numCentroids].botY = maxY;
+	int cx,cy,tx,ty,bx,by;
+	//for(k = 0; k < sizeof temp; k++) temp[k] = 0;
+	labir_init2();
+	while (!labir_extract2(image, &cx, &cy, &tx, &ty, &bx, &by) && numCentroids < NUM_BLOBS_MAX) {
+		centroids[numCentroids].X = cx;
+		centroids[numCentroids].Y = cy;
+		centroids[numCentroids].topX = tx;
+		centroids[numCentroids].topY = ty;
+		centroids[numCentroids].botX = bx;
+		centroids[numCentroids].botY = by;
 		numCentroids++;
-		for(i = 0; i < sizeof temp; i++) temp[i] = 0;
 	}
 
 	return numCentroids;

@@ -73,7 +73,8 @@ class MyApp (threading.Thread):
                                 boundingBoxes.append((ident, topX, topY, botX, botY))
                                 readedresponse = serial.read(1)
                                 
-                        img = Image.open(imgpath.replace("foreground_mask", "original")).convert("RGB")
+                        #img = Image.open(imgpath.replace("foreground_mask", "original")).convert("RGB")
+                        img = img.convert("RGB")
                         drw = ImageDraw.Draw(img)
                         
                         for bbox in boundingBoxes:
