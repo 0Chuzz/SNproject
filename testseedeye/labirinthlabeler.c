@@ -11,6 +11,7 @@
 
 #include "labirinthlabeler.h"
 #include "utils.h"
+#include "util.h"
 
 typedef enum {
 	UP,
@@ -154,6 +155,8 @@ int labir_extract2(bitimg_t *from, int *centrX, int *centrY,
 	dir_t dir = RIGHT, newdir;
 	bitimg_t lr[BYTES_FOR(WIDTH) * HEIGHT];
 	bitimg_t ud[BYTES_FOR(WIDTH) * HEIGHT];
+	EE_UINT32 time1;
+	time1 = get_time_stamp();
 
 	for (j = hintY; j < HEIGHT; j++) {
 		for (i = hintX; i < WIDTH; i++) {
@@ -197,7 +200,7 @@ int labir_extract2(bitimg_t *from, int *centrX, int *centrY,
 	}
 
 
-	//myprintf("end of blob big %d\n", cn);
+	myprintf("BLOB SIZE: %d ELAPSED: %d\n", cn, elapsed_us(time1, get_time_stamp()));
 	*centrX = cx/cn;
 	*centrY = cy/cn;
 	*topX = tx;
