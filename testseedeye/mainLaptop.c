@@ -23,120 +23,57 @@
 #include "sievelabeler.h"
 #include "labirinthlabeler.h"
 #include "kalman2.h"
+#include "approximatedKalman.h"
 #include "minassign.h"
 #include "mcu/microchip_pic32/inc/ee_timer.h"
 #define VISIBLE_TRESHOLD 2
+#define TIME_CHECK
+#define UNASSIGNMENT_COST 100
+#define APPROXIMATED
+/** Management of approximated and unapproximated versions */
+#ifdef APPROXIMATED
+
+
+#define TRACK	approxKalmanTrack_t
+#define PREDICT_ALL(N, S) approximate_predictAll((N), (S))
+#define FIND_ASSIGNMENT(nT, nB, S, C, uC, P, unC, unCNum)	fastFindAssignment((nT), (nB), (S), (C), (uC), (P), (unC), (unCNum))
+#define CORRECT_ALL(nT, nB, S, C, P)	approximate_correctAll((nT), (nB), (S), (C), (P))
+
+
+#else
+
+#define TRACK kalmanTrack
+#define UNIT_VALUE 1
+
+#define PREDICT_ALL(N, S)	predictAll((N), (S))
+#define FIND_ASSIGNMENT(nT, nB, S, C, uC, P, unC, unCNum)	findAssignment((nT), (nB), (S), (C), (uC), (P), (unC), (unCNum))
+#define CORRECT_ALL(nT, nB, S, C, P)	correctAll((nT), (nB), (S), (C), (P))
+#endif
+
 
 
 
 // buffer con immagine B/N, 1 bit per pixel
 static bitimg_t bitbuffer[320 * 240 / 8];
 
-static kalmanTrack states[NUM_BLOBS_MAX];
+static TRACK states[NUM_BLOBS_MAX];
 
 static point centroids[NUM_BLOBS_MAX];
 
 static int newId = 0;
-
-#ifndef FINAL
-int isPermutation(size_t permSize, int permutation[]) {
-	int mapping[NUM_BLOBS_MAX];
-	int i;
-	for(i = 0; i < NUM_BLOBS_MAX;i++) {
-		mapping[i] = 0;
-	}
-	for(i = 0; i < permSize; i++) {
-		if(permutation[i] <= 0) continue;
-		if (mapping[permutation[i]] == 0)
-			mapping[permutation[i]] = 1;
-		else {
-			printf("Conflict on %d", permutation[i]);
-			return 0;
-		}
-	}
-	return 1;
-}
-#endif
-//Test 2d kalman filter
-int test2dKalman(){
-	int i,j;
-		point p;
-		p.X = 0;
-		p.Y = 0;
-		kalmanTrack t;
-		for(i = 0; i < 4; i++) {
-			for (j = 0; j < 4; j++)
-				t.cov[i][j] = 0;
-		}
-		t.posX = 0;
-		t.posY = 0;
-
-		t.velX = 0;
-		t.velY = 0;
-		for(i = 0; i < 10; i++) {
-			int r1 = rand() % 2;
-			p.X+=(r1) ? 2 : 1;
-			r1 = rand()%2;
-			p.Y+=(r1) ? 4 : 2;
-			predict(&t);
-			printf("Prediction says:\n");
-			printf("Pos: (%d, %d)\n", t.posX, t.posY);
-			printf("Speed: (%.2f, %.2f)\n", t.velX, t.velY);
-			int k;
-			for(j = 0; j < 4; j++) {
-				for(k = 0; k < 4; k++) {
-					printf("%.2f \t", t.cov[j][k]);
-				}
-				printf("\n");
-			}
-			update(&t, p);
-			printf("RealPosition is %d, %d\n", p.X, p.Y);
-		}
-
-
-		return 0;
-}
-
-void copyPermute(int permSize, label_t toPerm[WIDTH*HEIGHT], unsigned char*finalImg[WIDTH*HEIGHT+1], int permutation[NUM_BLOBS_MAX]) {
-	int i;
-	for(i = 0; i < WIDTH*HEIGHT; i++) {
-		if (toPerm[i] > 0 && permutation[toPerm[i]] > 0) {
-				*finalImg[i] = states[permutation[toPerm[i]]].id;
-		} else {
-			*finalImg[i] = 0;
-		}
-	}
-	finalImg[WIDTH*HEIGHT] = '\0';
-}
-#ifndef FINAL
-label_t * permute(size_t width, size_t height, size_t permsize, label_t toPerm[width*height], int permutation[permsize]) {
-	
-	int i;
-	
-	for(i = 0; i < WIDTH*HEIGHT; i++) {
-	
-		if (toPerm[i] > 0 && permutation[toPerm[i]] > 0) {
-			toPerm[i] = states[permutation[toPerm[i]]].id + 1;
-		} else {
-			toPerm[i] = 0;
-		}
-	}
-	
-	return toPerm;
-}
-#endif
-
+/**
+ * Executes the tracking procedure
+ */
 int mainLaptop(int argn, char *argv[]) {
 
-	int stream_element = 0;
-	int readed;
 	/** First reading: used for the first estimation*/
 	int i;
 	#ifndef FINAL
+	/**  Read from file into bitbuffer*/
+	int stream_element = 0;
 	FILE *f;
 	initializeDirectory(argv[1], argv[2], atoi(argv[3]), argv[4]);
 	char outfile[1100];
-
 	if(!nextImageFile(outfile)){
 		printf("Empty Stream \n");
 		exit(-1);
@@ -147,10 +84,12 @@ int mainLaptop(int argn, char *argv[]) {
 		fclose(f);
 	} else decodePng(outfile, bitbuffer, 320, 240);
 	#else
+	/** Receive from serial into bitbuffer */
+	int readed;
 	readed = myread(bitbuffer, 320*240/8);
 	myprintf("%16d", readed);
-
 	#endif
+	/** Detect initial blobs. Then initialize all tracks to  the blobs detected now */
 	int numTracks = efficientKalmanCentroids(WIDTH, HEIGHT,bitbuffer, centroids);
 	for (i = 0; i < numTracks; i++) {
 		states[i].posX = centroids[i].X;
@@ -162,16 +101,19 @@ int mainLaptop(int argn, char *argv[]) {
 		states[i].totalVisibleCount = 0;
 		states[i].consecutiveInvisibleCount = 1;
 		int j, k;
+		/** The autocov. of the states (on the principal diagonal) is set
+		 * to a large enough value, represented by INITIAL_AUTOCOV(=1000 in the ex.)
+		 */
 		for(j = 0; j < 4; j++)
 			for(k = 0; k < 4; k++) {
-			if(j == k) states[i].cov[j][k] = 1000;
+			if(j == k) states[i].cov[j][k] = INITIAL_AUTOCOV*UNIT_VALUE;
 			else states[i].cov[j][k] = 0;
 		}
 	}
 	#ifdef FINAL
-	myprintf("%d blobs detected\n", numTracks);
+	//Notify the reader that we have no bounding box nor any other information
+	//and require another image.
 	myprintf("$$");
-    //mywrite(bitbuffer, 320*240/8);
 	while(1) {
 		readed = myread(bitbuffer, 320*240/8);
 		myprintf("%16d", readed);
@@ -185,12 +127,18 @@ int mainLaptop(int argn, char *argv[]) {
 			fclose(f);
 		} else decodePng(outfile, bitbuffer, 320, 240);
 	#endif
-
 	#ifdef TIME_CHECK
 		EE_UINT32 time_tot, time1;
 		time_tot = time1 = get_time_stamp();
 	#endif
-		numTracks = predictAll(numTracks, states);
+		/** Perform a prediction on the next state of the current tracks */
+		numTracks = PREDICT_ALL(numTracks, states);
+	#ifdef DEBUG
+		//Print all predictions
+		for(i = 0; i < numTracks; i++) {
+			myprintf("%d has foreseen position (%d,%d) and speed (%.2f, %.2f)\n", i, states[i].posX, states[i].posY, (float) states[i].velX/UNIT_VALUE, (float)states[i].velY/UNIT_VALUE);
+		}
+	#endif
 	#ifdef TIME_CHECK
 		myprintf("Prediction\t%d\n", elapsed_us(time1, get_time_stamp()));
 	#endif
@@ -198,22 +146,25 @@ int mainLaptop(int argn, char *argv[]) {
 	#ifdef TIME_CHECK
 		time1 = get_time_stamp();
 	#endif
-
+		/** Detect current blobs and their centroids & bounding box */
 		int numBlobs = efficientKalmanCentroids(WIDTH, HEIGHT, bitbuffer, centroids);
 
 		#ifdef TIME_CHECK
-			myprintf("Labelling+Centroids\t%d\n", elapsed_us(time1, get_time_stamp()));
+			myprintf("Labeling+Centroids\t%d\n", elapsed_us(time1, get_time_stamp()));
 		#endif
-			myprintf("%d blobs detected\n", numTracks);
-
-	int permutation[NUM_BLOBS_MAX];
-	for(i = 0; i < NUM_BLOBS_MAX; i++) permutation[i] = -1;
-	short unassignedCols[NUM_BLOBS_MAX], unassignedColNum;
+		/** Initialize permutation = vector used for blob -> track assignment
+		 */
+		int permutation[NUM_BLOBS_MAX];
+		for(i = 0; i < NUM_BLOBS_MAX; i++) permutation[i] = -1;
+		short unassignedCols[NUM_BLOBS_MAX], unassignedColNum;
 
 	#ifdef TIME_CHECK
 		time1 = get_time_stamp();
 	#endif
-	findAssignment(numTracks, numBlobs, states, centroids, 100, permutation, unassignedCols, &unassignedColNum);
+	/** Assignment heuristic.
+	 * After the distance between foreseen centroid and actual centroid is bigger than UNASSIGNMENT_COST
+	 * no assignment is performed.*/
+	FIND_ASSIGNMENT(numTracks, numBlobs, states, centroids, UNASSIGNMENT_COST, permutation, unassignedCols, &unassignedColNum);
 	#ifdef TIME_CHECK
 		myprintf("Assignment\t%d\n", elapsed_us(time1, get_time_stamp()));
 	#endif
@@ -222,13 +173,12 @@ int mainLaptop(int argn, char *argv[]) {
 	#ifdef TIME_CHECK
 		time1 = get_time_stamp();
 	#endif
-		correctAll(numTracks, numBlobs, states, centroids, permutation);
+		/** Perform a kalman correction */
+		CORRECT_ALL(numTracks, numBlobs, states, centroids, permutation);
 	#ifdef TIME_CHECK
 		myprintf("Correction\t%d\n", elapsed_us(time1, get_time_stamp()));
+		time1 = get_time_stamp();
 	#endif
-		//myprintf("Correction End\n");
-		/** New assignments for the remaining */
-		//printf("Need to assign new %d blobs:\n", unassignedColNum);
 		for(i = 0; i < unassignedColNum; i++) {
 			states[numTracks+i].id = newId++; //assign is broken, fix it.
 			states[numTracks+i].posX = centroids[unassignedCols[i]].X;
@@ -240,21 +190,25 @@ int mainLaptop(int argn, char *argv[]) {
 			int j, k;
 			for(j = 0; j < 4; j++)
 				for(k = 0; k < 4; k++) {
-					if(j == k) states[numTracks+i].cov[i][j] = 1000;
-					else states[numTracks+i].cov[i][j] = 0;
+					if(j == k) states[numTracks+i].cov[j][j] = INITIAL_AUTOCOV*UNIT_VALUE;
+					else states[numTracks+i].cov[j][k] = 0;
 				}
 		}
+	#ifdef TIME_CHECK
+		myprintf("New tracks creation\t%d\n", elapsed_us(time1, get_time_stamp()));
+	#endif
 		//myprintf("New track assignment ended!");
 		numTracks += unassignedColNum;
 	#ifndef FINAL
 		sprintf(outfile, "%s/%d.ppm", argv[5], stream_element);
 		printf("%s\n", outfile);
 		saveLabeled(outfile, permute(WIDTH, HEIGHT, numBlobs, expanded, permutation), WIDTH, HEIGHT);
+		stream_element++;
 	#else
 
 		//Send quintuple in the form:
 		// <idT, x1,y1, x2, y2> for the bounding box of each blob recognized
-		myprintf("Total\t%d\n", elapsed_us(time_tot, get_time_stamp()));
+		myprintf("Total\t%d\n", get_time_stamp() - time_tot);
 		myprintf("$");
 
 		for(i = 0; i < numBlobs; i++) {
@@ -269,8 +223,6 @@ int mainLaptop(int argn, char *argv[]) {
 		}
 		myprintf("$");
 	#endif
-		stream_element++;
-
 	}
 	return 0;
 }

@@ -20,12 +20,16 @@ static short freeCount = 0;
 static short freed[NUM_BLOBS_MAX];
 static short lastUsed = 0;
 
-/** Call before start using Kalman Filter. Used to manage the identifiers of the tracks */
+/** Call before start using Kalman Filter. Used to manage the identifiers of the tracks
+ * NOT USED.
+ * */
 void initialize() {
 	freeCount = 0;
 	lastUsed = 0;
 }
-/* Assigns an id to a new track, possibly reusing ids of previously deleted tracks.*/
+/* Assigns an id to a new track, possibly reusing ids of previously deleted tracks.
+ * NOT USED.
+ * */
 int assign() {
 	if(freeCount > 0) {
 		freeCount--;
@@ -86,12 +90,14 @@ static inline void optimizedPredictCovariance(float cov[4][4]) {
 	cov[3][1] = temp[3][1] + temp[3][3];
 	//again, 3,2 and 3,3 don't change.
 }
-
+/**
+ * Performs a prediction
+ */
 void predict(kalmanTrack* t) {
 	/** Update exteem of the position */
 	t->posX += t->velX;
 	t->posY += t->velY;
-	//Speed has not to be updated in our model (o.w. introduce acc. todo)
+	//Speed has not to be updated in our model
 	/** Update covariances */
 	#ifdef KALMAN_OPTIMIZE
 	optimizedPredictCovariance(t->cov);
@@ -148,6 +154,15 @@ void update(kalmanTrack* t, point measure) {
 
 	}
 
+	for(i = 0; i < 4; i++)
+		for(j = 0; j < 4; j++) {
+			myprintf("TEMP: %d %d %.5f\n", i, j, temp[i][j]);
+		}
+	for(i = 0; i < 4; i++)
+		for(j = 0; j < 4; j++) {
+			myprintf("COV: %d %d %.5f\n", i, j, t->cov[i][j]);
+		}
+
 	float gain[4][2] = {
 			{t->cov[0][0] * temp[1][1] - t->cov[0][1]*temp[1][0], t->cov[0][1] * temp[0][0] - t->cov[0][0]* temp[0][1]},
 			{t->cov[1][0] * temp[1][1] - t->cov[1][1]*temp[1][0], t->cov[1][1] * temp[0][0] - t->cov[1][0]*temp[0][1]},
@@ -156,9 +171,18 @@ void update(kalmanTrack* t, point measure) {
 	};
 
 	float l = 1/((temp[0][0]*temp[1][1]) - (temp[0][1]*temp[1][0]));
+	myprintf("l1 value is %10.f\n", (temp[0][0]*temp[1][1]) - (temp[0][1]*temp[1][0]));
+	for(i = 0; i < 4; i++)
+		for(j = 0; j < 2; j++)
+			myprintf("%d %d --> %5.f\n", i, j, gain[i][j]);
+	myprintf("l value is %10.f\n", l);
 
 	for(i = 0; i < 4; i++)
 		for(j = 0; j < 2; j++)	gain[i][j] = gain[i][j] * l;
+
+	for(i = 0; i < 4; i++)
+		for(j = 0; j < 2; j++)
+			myprintf("%d %d --> %5.f\n", i, j, gain[i][j]);
 	//Now gain is K, use it to correct.
 	t->posX += gain[0][0]*y[0] + gain[0][1]*y[1];
 	//myprintf("Y updates as %d %.5f %d %.5f %d\n", t->posY, gain[1][0], y[0], gain[1][1], y[1]);
@@ -221,6 +245,7 @@ int efficientKalmanCentroids(int width, int height, bitimg_t image[WIDTH*HEIGHT/
 }
 
 
+
 int kalmanCentroids(int width, int height, label_t expanded[WIDTH*HEIGHT], point res[NUM_BLOBS_MAX]) {
 	unsigned int count[NUM_BLOBS_MAX];
 	unsigned int x_coord[NUM_BLOBS_MAX];
@@ -246,3 +271,44 @@ int kalmanCentroids(int width, int height, label_t expanded[WIDTH*HEIGHT], point
 	}
 	return i;
 }
+
+//Test 2d kalman filter
+int test2dKalman(int num_iter){
+	int i,j;
+		point p;
+		p.X = 0;
+		p.Y = 0;
+		kalmanTrack t;
+		for(i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++)
+				t.cov[i][j] = 0;
+		}
+		t.posX = 0;
+		t.posY = 0;
+
+		t.velX = 0;
+		t.velY = 0;
+		for(i = 0; i < num_iter; i++) {
+			int r1 = rand() % 2;
+			p.X+=(r1) ? 2 : 1;
+			r1 = rand()%2;
+			p.Y+=(r1) ? 4 : 2;
+			predict(&t);
+			printf("Prediction says:\n");
+			printf("Pos: (%d, %d)\n", t.posX, t.posY);
+			printf("Speed: (%.2f, %.2f)\n", t.velX, t.velY);
+			int k;
+			for(j = 0; j < 4; j++) {
+				for(k = 0; k < 4; k++) {
+					printf("%.2f \t", t.cov[j][k]);
+				}
+				printf("\n");
+			}
+			update(&t, p);
+			printf("RealPosition is %d, %d\n", p.X, p.Y);
+		}
+
+
+		return 0;
+}
+

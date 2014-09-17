@@ -52,22 +52,18 @@ CPU test_application {
 		/* Compiler Flags */
 		CFLAGS =  "-DPBUF_POOL_SIZE=2";
 		CFLAGS = "-DMEM_SIZE=1024*8"; 
-		CFLAGS = "-c99";
 		LDFLAGS = "-Wl,--defsym=_min_heap_size=16000,--defsym=_min_stack_size=2048";
 		
 		// CPU section
 		CPU_DATA = PIC32 {
 			APP_SRC = "main.c";
-			APP_SRC = "util.c";
-			APP_SRC = "imageiter.c";
-			APP_SRC = "labirinthlabeler.c";
-			//APP_SRC = "reflabeler.c";
-			APP_SRC = "sievelabeler.c";
-			APP_SRC = "utils.c";
-			//APP_SRC = "kalman.c";
+			APP_SRC = "mainLaptop.c";
 			APP_SRC = "kalman2.c";
 			APP_SRC = "minassign.c";
-			APP_SRC = "mainLaptop.c";
+			APP_SRC = "labirinthlabeler.c";
+			APP_SRC = "utils.c";
+			APP_SRC = "util.c";
+			APP_SRC = "approximatedKalman.c";
 			MULTI_STACK = FALSE;
 			ICD2 = TRUE;
 		};
