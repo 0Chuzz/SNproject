@@ -24,9 +24,9 @@ typedef enum {
 #define MOVE_DIR(dir) do{\
 	switch(dir){\
 	case UP : j--;break;\
-	case RIGHT: i--;break;\
+	case RIGHT: i++;break;\
 	case DOWN: j++; break;\
-	case LEFT: i++; break;\
+	case LEFT: i--; break;\
 	case NUM_DIRS: break;\
 	}} while (0)
 
@@ -136,9 +136,9 @@ void labir_init2(){
 #define MOVE_DIR_UPDATE_BB(dir) do{\
 	switch(dir){\
 	case UP : j--; 	if (ty > j) ty--;break;\
-	case RIGHT: i--;if (tx > i) tx--;break;\
+	case LEFT: i--;if (tx > i) tx--;break;\
 	case DOWN: j++;if (by < j) by++; break;\
-	case LEFT: i++;if (bx < i) bx++; break;\
+	case RIGHT: i++;if (bx < i) bx++; break;\
 	case NUM_DIRS: break;\
 	}} while (0)
 
@@ -199,8 +199,8 @@ int labir_extract2(bitimg_t *from, int *centrX, int *centrY,
 		goto check_unvisited2;
 	}
 
-
-	myprintf("BLOB SIZE: %d ELAPSED: %d\n", cn, elapsed_us(time1, get_time_stamp()));
+	time1 = elapsed_us(time1, get_time_stamp());
+	myprintf("BLOB SIZE: %d ELAPSED: %d CX: %d CY: %d X: %d Y: %d TX: %d TY: %d BX: %d BY: %d FIRSTX: %d FIRSTY: %d\n", cn, time1, cx, cy, cx/cn, cy/cn, tx, ty, bx, by, hintX, hintY);
 	*centrX = cx/cn;
 	*centrY = cy/cn;
 	*topX = tx;
