@@ -58,6 +58,7 @@
 /* serial interface api */
 void myprintf(const char *format, ...);
 void mywrite(char * str, int len);
+int myread (char *str, int read_bytes);
 void hex_dump(const void *base, int size);
 
 /* timer utils */

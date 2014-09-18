@@ -69,71 +69,126 @@
 \begin_body
 
 \begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Subsection
 problem
 \end_layout
 
 \begin_layout Standard
-Perform computer vision task in embedded sistem, like connected component
- labeling.
- Connected component labeling algorithms works on 320x240 BW images, splits
- different shapes.
- at least 9600 bytes are needed to store one image, and on embedded system
- we can suppose from 256k to 64k of memory for the whole CV process.
- This is a survey on algorithms that allows component labeling to be performed
- using less than 20k of memory.
- Also cpu resources are limited
+Perform computer vision task in embedded sistem, like tracking.
+ Implement algorithm with limited space and time.
+ We focused on two separate task on object tracking, component labeling
+ and trajectory prediction.
 \end_layout
 
 \begin_layout Section
-first implementation
+Labeling
+\end_layout
+
+\begin_layout Subsection
+introduction
 \end_layout
 
 \begin_layout Standard
-First implementation from paper XXX, the algorithm scans the image and perform
- an union set, where a different label is assigned to each pixel and adjacent
- pixel are joined in a single set.
+Connected component labeling is the process splitting groundthruts images
+ into separate components.
+ The starting image is a 320x240 black/white image.
+ And a result we get a set of blobs.
+ For a black and white image, using 1 bit per pixel 9600 bytes are needed
+ to store one image, while having a 8 bit label for each pixel implies allocatin
+g 76800 bytes per image.
+ On embedded system we can suppose to have from 256k to 64k of total available
+ memory for the whole tracking task, so the memory requirements are so stringent
+ that only few bits per pixel can be afforded.
+ The developed algorithms allows component labeling to be performed using
+ less than 20k of memory.
+\end_layout
+
+\begin_layout Subsection
+reference implementation
+\end_layout
+
+\begin_layout Standard
+First implementation from paper SCOPES , the algorithm scans the image and
+ perform an union find, where a different label is assigned to each new
+ foreground pixel and adjacent pixel are joined in a single set.
  This algorithm has high memory use, mainly caused by the high number of
- temporary labels required, and is limited n* of connected components.
+ temporary labels required, and so the number of connected components is
+ limited by the space used.
 \end_layout
 
-\begin_layout Section
-firt solution
+\begin_layout Subsection
+first solution
 \end_layout
 
 \begin_layout Standard
-multipass use only 2 BW buffers.
- disconnected elements, instead of getting a new label, are ignored.
- in case the algorithm detects that some connected pixels are ignored after
- all, it performs a second pass in the opposite direction.
- This continues until no connected pixels are left.
- The resulting shape is then processed separately, deleted from the started
- image and then the next shape is extracted.
- The multiple passes may cause excessive cpu usage, so this technique can
- be hybridized with the previous algoritm, using a low number of labels,
- and using multiple passes when they are not enough.
+The first modification allows to use only 2 BW buffers.
+ The difference arises by the behaviour of the algorithm when a pixel that
+ is disconnected from the first connected blob is detected.
+ Instead of getting a new label, it is ignored and stays in the background.
+ Eventually the algorithm will find that a pixel belonging to our blob is
+ connected to previously ignored pixels.
+ In this case, it performs a successive scan of the raster in the opposite
+ direction.
+ This process continues in loop until no connected pixels are left.
+ As a result we obtain a buffer containing a single connected shape, that
+ can then be processed separately, deleted from the mask image in order
+ to extract the successive blob.
+ This transforms the union find algorithm into a incremental algorithm as
+ the connected components are extracted from the original mask one at a
+ time.
+ So at the price of increased cpu usage we can separate the connected components
+ with a low memory footprint.
+ The duration of the algorithm for a single blob depends both on the size
+ and on its shape, and the number of raster scan can be very high in worst
+ case scenario.
 \end_layout
 
-\begin_layout Section
+\begin_layout Standard
+A way to limit the number of raster scans can be to increase the number
+ of intermediate buffers for pixel labels, so by utilizing an hybrid union-find
+ algorithm.
+ This implies using a low number of labels, and using multiple passes when
+ they are not enough.
+ This create a time-memory trade off scenario, but does not solve the unpredicta
+bility of the number of passes.
+\end_layout
+
+\begin_layout Subsection
 second solution
 \end_layout
 
 \begin_layout Standard
-This algorithm requires 2 BW buffers, 2 BW temporary on the stack.
- After finding a pixel it begins to move through the whole shape with a
- simple algorithm, move to the rightmost unvisited pixel.
+A better time bound can be obtained by changing approach.
+ The main inspiration has been the labirint algorithm, where by visiting
+ the rightmost corridor allows to visit the whole labirinth.
+ In pratice the blobs is considered a graph, and a spanning tree is traversed.
+ This algorithm requires 2 BW buffers, 2 BW temporary on the stack.
+ After finding a pixel it begins to move through the shape with a simple
+ algorithm, move to the rightmost unvisited pixel.
  The two temporary buffers are used to store the path taken, in order to
  allow backtracking.
- Because of this it uses more memory, but each shape pixel is visited from
- two to four times.
+ Because of this it uses more memory, but each shape pixel is visited at
+ most four times.
+ 
 \end_layout
 
-\begin_layout Section
+\begin_layout Subsection
 future work
 \end_layout
 
 \begin_layout Standard
-algorithm to exploit cpu word size instead of bit by bit checks.
- interlaced algorithms (check 1 every x pixels then merge).
+in all the algorithms the BW buffers are considered bit by bit, and no attempt
+ is made to exploit cpu word size instead.
+ This should lead to performance improvements especially in 32 bits systems.
+ According to the timing requirements the labeling algorithm can be applied
+ to downscaled images.
+\end_layout
+
+\begin_layout Standard
+SCOPES: Smart Cameras Object Position Estimation System
 \end_layout
 
 \end_body

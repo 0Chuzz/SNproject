@@ -79,9 +79,9 @@ CPU test_application {
 		EE_OPT = "__ADD_LIBS__";
 		
 		// External PHY
-		EE_OPT = "__USE_PHY_SMSC8720__";
-		EE_OPT = "__ADD_LIBS__";
-		LIB = ENABLE { NAME = "MAC_EXTPHY"; };
+		//EE_OPT = "__USE_PHY_SMSC8720__";
+		//EE_OPT = "__ADD_LIBS__";
+		//LIB = ENABLE { NAME = "MAC_EXTPHY"; };
 		
 		// Board Configuration
 		EE_OPT = "__IPERMOB_BOARD_V2__";
@@ -89,10 +89,10 @@ CPU test_application {
 		EE_OPT = "__USE_LEDS__";
 
 		// Timer Configuration
-		EE_OPT = "__USE_TIMER__";
-		EE_OPT = "__USE_EE_TIMER_1__";
-		EE_OPT = "__USE_EE_TIMER_2__";
-		EE_OPT = "__USE_EE_TIMER_3__";
+		//EE_OPT = "__USE_TIMER__";
+		//EE_OPT = "__USE_EE_TIMER_1__";
+		//EE_OPT = "__USE_EE_TIMER_2__";
+		//EE_OPT = "__USE_EE_TIMER_3__";
 		
 		// Uart configuration
 		EE_OPT = "__USE_UART__";
@@ -105,9 +105,9 @@ CPU test_application {
 		LIB = ENABLE { NAME = "CONSOLE"; };
 		
 		// LWIP
-		CFLAGS = "-DLWIP_UDP=1";
-		EE_OPT = "__LWIP_IPV4__";
-		LIB = ENABLE { NAME = "LWIP"; };
+		//CFLAGS = "-DLWIP_UDP=1";
+		//EE_OPT = "__LWIP_IPV4__";
+		//LIB = ENABLE { NAME = "LWIP"; };
 		//EE_OPT = "LWIP_RX_POLLING";
 		
 		/*
@@ -127,43 +127,5 @@ CPU test_application {
 		KERNEL_TYPE = FP;
 	};
 
-	/* ****************************************************************** */
-	/*                          Application                               */
-	/* ****************************************************************** */
-	
-	// TASKs list 
-	TASK Sender {
-		PRIORITY = 8;
-		STACK = SHARED;
-		SCHEDULE = FULL;
-		RESOURCE = LwipMutex;
-	};
-
-	// COUNTERs list
-	COUNTER SenderCounter;
-
-	// ALARMs list
-	ALARM SenderAlarm {
-		COUNTER = SenderCounter;
-		ACTION = ACTIVATETASK { TASK = Sender; };
-	};
-	
-	/* RESOURCEs list */
-	RESOURCE LwipMutex { RESOURCEPROPERTY = STANDARD; };
-
-	/* TASKs list */
-	TASK LwipReceive {
-		PRIORITY = 30;
-		STACK = SHARED;
-		SCHEDULE = FULL;
-		RESOURCE = LwipMutex;
-	};
-
-	TASK LwipPeriodic {
-		PRIORITY = 35;
-		STACK = SHARED;
-		SCHEDULE = FULL;
-		RESOURCE = LwipMutex;
-	};
 		
 };

@@ -88,6 +88,22 @@ void mywrite(char * str, int len){
     EE_pic32_enableIRQ();
 }
 
+
+
+int myread (char *str, int read_bytes) {
+
+EE_pic32_disableIRQ();
+
+	int len;
+
+console_read(MY_FIRST_CONSOLE, str, read_bytes, &len);
+
+EE_pic32_enableIRQ();
+
+	return len;
+
+}
+
 void hex_dump(const void *base, int size)
 {
     const unsigned char *p = base;

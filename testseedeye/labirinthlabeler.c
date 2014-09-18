@@ -54,6 +54,7 @@ inline static void write_dir(dir_t dir, bitimg_t *lr, bitimg_t *ud, int i, int j
 	case RIGHT: clear_at(ud, i, j); set_at(lr, i,j); break;
 	case DOWN: set_at(ud, i, j); clear_at(lr, i,j); break;
 	case LEFT: set_at(ud, i, j); set_at(lr, i,j); break;
+	case NUM_DIRS: break;
 	}
 
 }
@@ -64,6 +65,7 @@ inline static dir_t opposite(dir_t dir){
 	case RIGHT: return LEFT;
 	case DOWN: return UP;
 	case LEFT: return RIGHT;
+	case NUM_DIRS: break;
 	}
 	return NUM_DIRS;
 }

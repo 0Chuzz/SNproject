@@ -52,9 +52,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "console_serial.h"
-/* lwIP */
-//#include <ee_lwip.h>
-//#include "lwip.h"
+#include "utils.h"
+
 /* Other libraries */
 #include "util.h"
 #include "mainLaptop.h"
@@ -82,97 +81,8 @@ console_descriptor_t *my_console_1;
 
 
 
-TASK(Sender)
-{
-    /*EE_UINT32 time1, time2, time3;
-    struct udp_pcb *socket;
-    struct ip_addr ipaddr;
-    static EE_UINT8 buf[UDP_SENDER_BUF_SIZE];
-    const unsigned num_packets = UDP_NUM_PACKETS;
-    static EE_UINT16 size = UDP_SENDER_INIT_SIZE;
-    struct pbuf *pb;
-    err_t ret;
-    unsigned i;
-
-    myprintf("\nSender: sending %d %d-byte packets\n", num_packets, size);
-
-    time1 = get_time_stamp();
-    GetResource(LwipMutex);
-    socket = udp_new();
-    if (0 == socket) {
-        ReleaseResource(LwipMutex);
-        myprintf("ERROR: cannot create UDP socket\n");
-        return;
-    }
-    ret = udp_bind(socket, IP_ADDR_ANY, my_port+1);
-    if (ret != ERR_OK) {
-        udp_remove(socket);
-        ReleaseResource(LwipMutex);
-        myprintf("ERROR while binding to UDP port %d\n", my_port+1);
-        return;
-    }
-    IP4_ADDR(&ipaddr, MY_IPADDR_BYTE1, MY_IPADDR_BYTE2,
-        MY_IPADDR_BYTE3, MY_IPADDR_BYTE4 - 1);
-    udp_connect(socket, &ipaddr, remote_port);
-
-    pb = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_REF);
-    if (pb != 0) {
-        ReleaseResource(LwipMutex);
-        pb->payload = buf;
-        time2 = get_time_stamp();
-        for (i = 0; i < num_packets; ++i) {
-            msleep(2);
-            sprintf((char *)buf, "%5d", i);
-            GetResource(LwipMutex);
-            ret = udp_send(socket, pb);
-            ReleaseResource(LwipMutex);
-            if (ret != ERR_OK)
-                myprintf("ERROR in sending a packet\n");
-        }
-        time3 = get_time_stamp();
-        GetResource(LwipMutex);
-        udp_remove(socket);
-        pbuf_free(pb);
-        ReleaseResource(LwipMutex);
-        myprintf("Setup took %d us\n", elapsed_us(time1, time2));
-        myprintf("Transmission of %d kB took %d ms (%d kB/s)\n",
-            size * num_packets / 1024, elapsed_ms(time2, time3),
-            size * num_packets / 1024 * 1000 / elapsed_ms(time2, time3));
-    } else {
-        udp_remove(socket);
-        ReleaseResource(LwipMutex);
-        myprintf("ERROR while allocating a pbuf\n");
-    }
-    if (size*2 <= UDP_SENDER_BUF_SIZE)
-        size *= 2;
-        */
-}
-
-static void timer_tick(void)
-{
-    CounterTick(SenderCounter);
-}
-
-int myread (char *str, int read_bytes) {
-
-EE_pic32_disableIRQ();
-
-	int len;
-
-console_read(MY_FIRST_CONSOLE, str, read_bytes, &len);
-
-EE_pic32_enableIRQ();
-
-	return len;
-
-}
-#include "utils.h"
-//static char mybuffer[320*240/8];
-
 int main(void)
 {
-    //struct udp_pcb *my_udp_socket;
-    //err_t ret;
 
 	ENABLE_1V2_VOLTAGE();
     EE_system_init();
@@ -188,13 +98,6 @@ int main(void)
     }
 
 
-
-    /* Application main timer */
-    EE_timer_soft_init(EE_TIMER_3, 1000);
-    EE_timer_set_callback(EE_TIMER_3, timer_tick);
-    SetRelAlarm(SenderAlarm, 100, 10000); //ActivateTask(Sender);
-    EE_timer_start(EE_TIMER_3);
-
     myprintf("dal device\n");
     char testtest[8];
     int asdasd = myread(testtest, 8);
@@ -202,9 +105,6 @@ int main(void)
     mywrite(testtest, 8);
     myprintf("\n");
     while(1){
-    	//int readed = myread(mybuffer, 320*240/8);
-
-    	//myprintf("%.*s\n", readed, mybuffer);
     	mainLaptop(0, NULL);
     }
 }
