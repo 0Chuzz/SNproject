@@ -73,14 +73,45 @@ Introduction
 \end_layout
 
 \begin_layout Subsection
-problem
+Problem statement
 \end_layout
 
 \begin_layout Standard
-Perform computer vision task in embedded sistem, like tracking.
- Implement algorithm with limited space and time.
- We focused on two separate task on object tracking, component labeling
- and trajectory prediction.
+Embedded computing systems are a unfavorable platform to perform computer
+ vision tasks, due to the stringent memory and processing power constraints.
+ Traditional algorithm must be modified to accomodate the new requirements.
+ In this particular project we focused on two tasks that are fundamental
+ for the objective of object tracking.
+ These two tasks are component labeling and trajectory prediction.
+ Component labeling is the process of splitting the pixel that contain some
+ moving object into separate shapes.
+ The labeling part is improved upon a previous implementation that uses
+ a union-find algorithm.
+ The prediction tasks correlates the shapes detected at a certain point
+ in time with the past.
+ The prediction part uses a kalman filter.For testing we used a SEED-EYE
+ board, that consists of a PIC32 CPU with 128 KB of available ram and 512K
+ of ROM for code.
+ The seed-eye board received images through UART serial line, processed
+ them and passed back results and benchmark back to the PC.
+ As a source of images we used the Fudan Pedestrian Dataset.
+ This dataset comes from a camera mounted in front of the entrance of a
+ office building.
+ The SEED-EYE received already pre-processed images where motion detection
+ algorithm outlined person shapes.
+ 
+\end_layout
+
+\begin_layout Subsection
+Report structure
+\end_layout
+
+\begin_layout Standard
+the first chapter is a general introduction to the project.
+ the second chapter delves into the component labeling part, while the third
+ chapter explains how kalman filter works.
+ The last chapter contains overall considerations and proposal to further
+ improvements to the project.
 \end_layout
 
 \begin_layout Section
@@ -88,14 +119,15 @@ Labeling
 \end_layout
 
 \begin_layout Subsection
-introduction
+Introduction
 \end_layout
 
 \begin_layout Standard
-Connected component labeling is the process splitting groundthruts images
+Connected component labeling is the process splitting areas of interest
  into separate components.
- The starting image is a 320x240 black/white image.
- And a result we get a set of blobs.
+ The starting image is a 320x240 black/white image where for each pixel
+ we get a boolean value.
+ As result we get a set of blobs of adjacent pixels.
  For a black and white image, using 1 bit per pixel 9600 bytes are needed
  to store one image, while having a 8 bit label for each pixel implies allocatin
 g 76800 bytes per image.
@@ -107,25 +139,479 @@ g 76800 bytes per image.
 \end_layout
 
 \begin_layout Subsection
-reference implementation
+Reference implementation
 \end_layout
 
 \begin_layout Standard
-First implementation from paper SCOPES , the algorithm scans the image and
- perform an union find, where a different label is assigned to each new
- foreground pixel and adjacent pixel are joined in a single set.
- This algorithm has high memory use, mainly caused by the high number of
+The first algorithm that was taken into consideration is from the paper
+ SCOPES .
+ The algorithm perform an union find, where a different label is assigned
+ to each foreground pixel and adjacent pixel are joined in a single set.
+ The image is scanned from the top left and each pixel is assigned a label
+ according to the pixel on the top and the pixel on the left according to
+ the rule outlined in Table 1.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="6" columns="3">
+<features rotate="0" tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Top pixel
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Left Pixel
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Action
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+New label
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+L1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Assign label L1
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+L2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Assign label L2
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+L3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+L3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Assign label L3
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+L4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+L5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Union(L4, L5); Assign L4
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+rules for union-find connected component labeling
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The result of this is a buffer where each pixel is assigned a label, that
+ tieas it to a specific blob.
+ All the pixel are labeled and all blobs have been detected.
+\end_layout
+
+\begin_layout Standard
+This algorithm has high memory use, mainly caused by the high number of
  temporary labels required, and so the number of connected components is
  limited by the space used.
+ In table 2, we can see that to label the blobs of a complex image the memory
+ requirements grows above the available space on a tipical embedded system.
+ Moreover, according to the data structure used to do the union find algorithm,
+ the need temporary labels may lower even more the number of detectable
+ blobs.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="3">
+<features rotate="0" tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+bits per pixel
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+bytes per immagine
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+max blobs
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9600
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19200
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+28800
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+76800
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+256
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+memory usage and blob limits for union find
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The fastest union-find algorithms, for N pixels, have a O(N+ NlogN) complexity;
+ though the theoretical space required is very high as it uses a number
+ of labels equal of the number of pixels.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename worstcaseuf.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+worst case shape for union-find: high number of temporary labels
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
-first solution
+First improvement: multi-pass algorithm
 \end_layout
 
 \begin_layout Standard
-The first modification allows to use only 2 BW buffers.
- The difference arises by the behaviour of the algorithm when a pixel that
+The first modification allows to use only 2 black and white buffers.
+ The difference arises by the behavior of the algorithm when a pixel that
  is disconnected from the first connected blob is detected.
  Instead of getting a new label, it is ignored and stays in the background.
  Eventually the algorithm will find that a pixel belonging to our blob is
@@ -136,14 +622,104 @@ The first modification allows to use only 2 BW buffers.
  As a result we obtain a buffer containing a single connected shape, that
  can then be processed separately, deleted from the mask image in order
  to extract the successive blob.
- This transforms the union find algorithm into a incremental algorithm as
+ Figure 2 shows the starting image, and the detected connected components
+ after the first and the second pass.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename multipass1.png
+	scale 25
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename multipass2.png
+	scale 25
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename multipass3.png
+	scale 25
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+example of multipass
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This transforms the union find algorithm into a incremental algorithm as
  the connected components are extracted from the original mask one at a
  time.
- So at the price of increased cpu usage we can separate the connected components
+ So at the price of increased CPU usage we can separate the connected components
  with a low memory footprint.
  The duration of the algorithm for a single blob depends both on the size
  and on its shape, and the number of raster scan can be very high in worst
  case scenario.
+ In figure 3 we can see that pixel can be in such a setting that the image
+ is scanned a very high number of time, requiring as much passes as pixels,
+ potentially thousands.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename worstcasemp2.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+worst case scenario for multipass
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -157,22 +733,222 @@ bility of the number of passes.
 \end_layout
 
 \begin_layout Subsection
-second solution
+Second improvement: 
+\begin_inset Quotes eld
+\end_inset
+
+labirinth algorithm
+\begin_inset Quotes erd
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
 A better time bound can be obtained by changing approach.
- The main inspiration has been the labirint algorithm, where by visiting
- the rightmost corridor allows to visit the whole labirinth.
- In pratice the blobs is considered a graph, and a spanning tree is traversed.
- This algorithm requires 2 BW buffers, 2 BW temporary on the stack.
- After finding a pixel it begins to move through the shape with a simple
- algorithm, move to the rightmost unvisited pixel.
- The two temporary buffers are used to store the path taken, in order to
- allow backtracking.
- Because of this it uses more memory, but each shape pixel is visited at
- most four times.
+ The main inspiration has been an algorithm to cross a labyrinth, where
+ by visiting the rightmost corridor at every intersection allows to visit
+ the whole labyrinth.
+ So as soon as the first pixel is found, the algorithm starts moving in
+ a direction inside the shape trying to visit the next rightmost unvisited
+ point.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename labirpass.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+visiting a shape
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In practice a blob is considered as graph, and after the first pixel is
+ found the algorithm traverse a spanning tree starting from it.
+ As each pixel has at most 4 adjacent pixels, the traverse algorithm tests
+ for unvisited pixels at most 4 times, then it never visit it again.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename labirpassspanningtree.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+connected pixel spanning tree
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This algorithm requires 2 black and white buffers, and two bits per pixel
+ in a temporary buffer on the stack.
+ First it raster scans the image to find the first pixel.
+ When a new pixel is found, the output buffer is updated and the scanning
+ direction that was used while finding it is stored in the temporary buffer.
+ This is required in order to remember which was the adjacent node that
+ was parent in the spanning tree.
+ Then the algorithms finds the rightmost unvisited pixel.
+ For example when the search direction is RIGHT, it checks the pixel on
+ directions DOWN, RIGHT, UP in this order.
+ When no more unvisited pixel are found, the algorithm moves back to the
+ parent pixel, and when the root pixel is reached the algorithm terminates.
  
+\end_layout
+
+\begin_layout Standard
+Compared to the previous approaches it uses more memory, but each shape
+ pixel is visited at most four times.
+ So the space is bounded by the number of pixel of the image, and time is
+ bounded by the number of foreground pixels.
+ 
+\end_layout
+
+\begin_layout Subsection
+Performance analysis
+\end_layout
+
+\begin_layout Standard
+Timing measurement were collected from the elaboration for the extraction
+ of a single connected component and for total image processing.
+ The measurements plotted in figure 6 show that the time that the algorithm
+ require to process a single blob is linear to the quantity of connected
+ pixel, with a small but not negligible constant time part.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+scatter plot
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The total time for processing an image instead is a gamma distribution with
+ average of 30 milliseconds.
+ From Figure 7 we can see the cumulative probability to elaborate an image
+ in a certain time.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+gamma distribution
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Optimizations
+\end_layout
+
+\begin_layout Standard
+Since the full shape of the blob is not needed for the subsequent steps,
+ instead of saving the blob into a buffer, the synthetic values such as
+ bounding box and centroid can be calculated while each pixel is visited.
+ This allow to cut off a 9.6 KB buffer used for the blob, and the relative
+ initialization and usage time.
+ Also when updating the synthetic value some calculation can be shaved off:
+ the bounding box can be updated only when moving in a particular direction.
+ So when the next visited pixel is on the right only the right side of the
+ bounding box will be checked and updated, and so on.
+ This allow to reduce four checks performed for each pixel into a single
+ one.
+ Another thing that can be optimized is the first part of the algorithm,
+ the scan for the first pixels.
+ In the first implementation each time a new blob is searched the image
+ is scanned starting from the top left pixel.
+ By saving the last position of the previous scan in two static variables,
+ so just using two short int or 4 bytes, the topmost pixel are not scanned
+ each time anymore.
 \end_layout
 
 \begin_layout Subsection
@@ -180,11 +956,11 @@ future work
 \end_layout
 
 \begin_layout Standard
-in all the algorithms the BW buffers are considered bit by bit, and no attempt
- is made to exploit cpu word size instead.
+in all the algorithms the black and white buffers are considered bit by
+ bit, and no attempt is made to exploit CPU word size instead.
  This should lead to performance improvements especially in 32 bits systems.
- According to the timing requirements the labeling algorithm can be applied
- to downscaled images.
+ Moreover, according to the timing requirements the labeling algorithm can
+ be applied to down-scaled images.
 \end_layout
 
 \begin_layout Standard
