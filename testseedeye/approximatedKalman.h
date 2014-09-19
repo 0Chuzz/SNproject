@@ -39,29 +39,6 @@ typedef struct {
 
 } approxKalmanTrack_t;
 
-
-static float approxMeasurementNoiseM[4][4] = {
-		{0.1, 0.1, 1, 1},
-		{0.1, 0.2, 2, 2},
-		{0.3, 0.1, 3, 3},
-		{0.1, 0.9, 4, 1}
-};
-
-static int approxTransitionMatrix[4][4] = {
-	{1*UNIT_VALUE, 0, 1*UNIT_VALUE, 0},
-	{0, 1*UNIT_VALUE, 0, 1*UNIT_VALUE},
-	{0, 0, 1*UNIT_VALUE, 0},
-	{0, 0, 0, 1*UNIT_VALUE}
-};
-
-static int approxTransitionMatrixT[4][4] = {
-	{1*UNIT_VALUE, 0, 0, 0},
-	{0, 1*UNIT_VALUE, 0, 0},
-	{1*UNIT_VALUE, 0, 1*UNIT_VALUE, 0},
-	{0, 1*UNIT_VALUE, 0, 1*UNIT_VALUE}
-};
-
-
 void approximate_predict(approxKalmanTrack_t* t);
 /** Deletes a track */
 int approximate_delete(int size, approxKalmanTrack_t states[NUM_BLOBS_MAX], int pos);

@@ -6,6 +6,7 @@
  */
 #include "approximatedKalman.h"
 #include "utils.h"
+#include "util.h"
 #include "labirinthlabeler.h"
 #include <stdint.h>
 
@@ -15,6 +16,27 @@
 #define VISIBLE_TRESHOLD 2
 #define DELETION_TRESHOLD 2
 #define HALF_UNIT_VALUE UNIT_VALUE/2
+
+static float approxMeasurementNoiseM[4][4] = {
+		{10, 10},
+		{10, 10}
+};
+
+static int approxTransitionMatrix[4][4] = {
+	{1*UNIT_VALUE, 0, 1*UNIT_VALUE, 0},
+	{0, 1*UNIT_VALUE, 0, 1*UNIT_VALUE},
+	{0, 0, 1*UNIT_VALUE, 0},
+	{0, 0, 0, 1*UNIT_VALUE}
+};
+
+static int approxTransitionMatrixT[4][4] = {
+	{1*UNIT_VALUE, 0, 0, 0},
+	{0, 1*UNIT_VALUE, 0, 0},
+	{1*UNIT_VALUE, 0, 1*UNIT_VALUE, 0},
+	{0, 1*UNIT_VALUE, 0, 1*UNIT_VALUE}
+};
+
+
 static inline void matrixproduct(int m1[4][4], int m2[4][4], int result[4][4]) {
 	int i,j,k;
 	for(i = 0; i < 4; i++) {
@@ -90,7 +112,9 @@ int approximate_predictAll(int size, approxKalmanTrack_t states[NUM_BLOBS_MAX]) 
 			size = approximate_delete(size, states, i); //delete is linear, could be better. But we don't care.
 			i--;
 		}
+		EE_UINT32 time = get_time_stamp();
 		approximate_predict(states+i);
+		myprintf("Update\t%d\n", elapsed_us(time, get_time_stamp()));
 		states[i].age++;
 	}
 	return size;
@@ -122,8 +146,8 @@ void approximate_update(approxKalmanTrack_t* t, point measure) {
 	//Temp = S = H x Pk x H^t + R (H is I_2)
 	for(i = 0; i < 4; i++) {
 		for(j = 0; j < 4; j++) {
-			if(i > 2 || j > 2) temp[i][j] = 0;
-			else temp[i][j] = (t->cov[i][j] + measurementNoiseM[i][j]*UNIT_VALUE);
+			if(i >= 2 || j >= 2) temp[i][j] = 0;
+			else temp[i][j] = (t->cov[i][j] + approxMeasurementNoiseM[i][j]);
 		}
 
 	}
@@ -185,7 +209,9 @@ void approximate_correctAll(int tracks, int blobs, approxKalmanTrack_t states[NU
 	int i = 0;
 	for(i = 0; i < blobs; i++) {
 		if(permutation[i] < 0) continue;
+		EE_UINT32 time = get_time_stamp();
 		approximate_update(states+permutation[i], centroids[i]);
+		myprintf("SinglePredict\t%d\n", elapsed_us(time, get_time_stamp()));
 		states[permutation[i]].consecutiveInvisibleCount = 0;
 		states[permutation[i]].totalVisibleCount++;
 	}

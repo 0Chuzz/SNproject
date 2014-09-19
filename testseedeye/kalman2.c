@@ -1,10 +1,6 @@
-/*
- * kalman2.c
- *
- *  Created on: 08/set/2014
- *      Author: alessandro
- */
+
 #include "utils.h"
+#include "util.h"
 #include "kalman2.h"
 #include "labirinthlabeler.h"
 
@@ -16,28 +12,30 @@
 #define VISIBLE_TRESHOLD 2
 #define DELETION_TRESHOLD 2
 
-static short freeCount = 0;
-static short freed[NUM_BLOBS_MAX];
-static short lastUsed = 0;
+#define KALMAN_PERFORMANCE
 
-/** Call before start using Kalman Filter. Used to manage the identifiers of the tracks
- * NOT USED.
- * */
-void initialize() {
-	freeCount = 0;
-	lastUsed = 0;
-}
-/* Assigns an id to a new track, possibly reusing ids of previously deleted tracks.
- * NOT USED.
- * */
-int assign() {
-	if(freeCount > 0) {
-		freeCount--;
-		return freed[freeCount];
-	}
-	lastUsed = (lastUsed + 1) % NUM_BLOBS_MAX;
-	return lastUsed-1;
-}
+static float measurementNoiseM[2][2] = {
+		{0.1, 0.1},
+		{0.1, 0.1},
+};
+
+static float transitionMatrix[4][4] = {
+	{1, 0, 1, 0},
+	{0, 1, 0, 1},
+	{0, 0, 1, 0},
+	{0, 0, 0, 1}
+};
+
+static float transitionMatrixT[4][4] = {
+	{1, 0, 0, 0},
+	{0, 1, 0, 0},
+	{1, 0, 1, 0},
+	{0, 1, 0, 1}
+};
+
+
+
+
 /**
  * Matrix Product
  */
@@ -55,12 +53,14 @@ static inline void matrixproduct(float m1[4][4], float m2[4][4], float result[4]
 
 /**
  * Makes a new prediction for the track t
+ *
+ * More straightforwar implementation of the covariance matrix prediction.
  */
 
 /** Uses aux. space O(N) and 128 operations */
 static inline void unoptimizedPredictCovariance(float cov[4][4]) {
 	float temp[4][4];
-	matrixproduct( transitionMatrix, cov, temp);
+	matrixproduct(transitionMatrix, cov, temp);
 	matrixproduct(cov, transitionMatrixT, cov);
 }
 /** Uses aux. space O(N) and 32 operations */
@@ -105,14 +105,11 @@ void predict(kalmanTrack* t) {
 	unoptimizedPredictCovariance(t->cov);
 	#endif
 	int i;
-	for(i = 0; i < 4; i++) { t->cov[i][i] += MOTION_NOISE;} //Q is only diagonal.
-	//P = F*P*F^T + Q
+	for(i = 0; i < 4; i++) { t->cov[i][i] += MOTION_NOISE;} //Q is only diagonal. It is assumed constant.
 }
 /** Deletes a track */
 int delete(int size, kalmanTrack states[NUM_BLOBS_MAX], int pos) {
 	int i;
-	freed[freeCount] = states[pos].id;
-	freeCount++;
 	for(i = pos; i+1 < size; i++) {
 		states[i] = states[i+1];
 	}
@@ -128,7 +125,13 @@ int predictAll(int size, kalmanTrack states[NUM_BLOBS_MAX]) {
 			size = delete(size, states, i); //delete is linear, could be better. But we don't care.
 			i--;
 		}
+	#ifdef KALMAN_PERFORMANCE
+		EE_UINT32 time = get_time_stamp();
+	#endif
 		predict(states+i);
+	#ifdef KALMAN_PERFORMANCE
+		myprintf("SinglePredict\t%d\n", elapsed_us(time, get_time_stamp()));
+	#endif
 		states[i].age++;
 	}
 	return size;
@@ -142,75 +145,51 @@ int predictAll(int size, kalmanTrack states[NUM_BLOBS_MAX]) {
 void update(kalmanTrack* t, point measure) {
 	float temp[4][4];
 	int i, j;
-	/** Vect is Y */
-
+	/** Innovation measure */
 	int y[2] = { measure.X - t->posX, measure.Y - t->posY};
-	//Temp = S = H x Pk x H^t + R (H is I_2)
+	//Temp = S = H x Pk x H^t + R (H is I_2). In reality S is two by two but we fill the rest with
+	//zero so that we can avoid to declare another temporary matrix in the following.
 	for(i = 0; i < 4; i++) {
 		for(j = 0; j < 4; j++) {
-			if(i > 2 || j > 2) temp[i][j] = 0;
+			if(i >= 2 || j >= 2) temp[i][j] = 0;
 			else temp[i][j] = (t->cov[i][j] + measurementNoiseM[i][j]);
 		}
 
 	}
 
-	for(i = 0; i < 4; i++)
-		for(j = 0; j < 4; j++) {
-			myprintf("TEMP: %d %d %.5f\n", i, j, temp[i][j]);
-		}
-	for(i = 0; i < 4; i++)
-		for(j = 0; j < 4; j++) {
-			myprintf("COV: %d %d %.5f\n", i, j, t->cov[i][j]);
-		}
+	float l = (temp[0][0]*temp[1][1]) - (temp[0][1]*temp[1][0]);
 
 	float gain[4][2] = {
-			{t->cov[0][0] * temp[1][1] - t->cov[0][1]*temp[1][0], t->cov[0][1] * temp[0][0] - t->cov[0][0]* temp[0][1]},
-			{t->cov[1][0] * temp[1][1] - t->cov[1][1]*temp[1][0], t->cov[1][1] * temp[0][0] - t->cov[1][0]*temp[0][1]},
-			{t->cov[2][0] * temp[1][1] - t->cov[2][1]*temp[1][0], t->cov[2][1] * temp[0][0] - t->cov[2][0]*temp[0][1]},
-			{t->cov[3][0] * temp[1][1] - t->cov[3][1]*temp[1][0], t->cov[3][1] * temp[0][0] - t->cov[3][0]*temp[0][1]}
+			{(t->cov[0][0] * temp[1][1] - t->cov[0][1]*temp[1][0])/l, (t->cov[0][1] * temp[0][0] - t->cov[0][0]* temp[0][1])/l},
+			{(t->cov[1][0] * temp[1][1] - t->cov[1][1]*temp[1][0])/l, (t->cov[1][1] * temp[0][0] - t->cov[1][0]*temp[0][1])/l},
+			{(t->cov[2][0] * temp[1][1] - t->cov[2][1]*temp[1][0])/l, (t->cov[2][1] * temp[0][0] - t->cov[2][0]*temp[0][1])/l},
+			{(t->cov[3][0] * temp[1][1] - t->cov[3][1]*temp[1][0])/l, (t->cov[3][1] * temp[0][0] - t->cov[3][0]*temp[0][1])/l}
 	};
 
-	float l = 1/((temp[0][0]*temp[1][1]) - (temp[0][1]*temp[1][0]));
-	myprintf("l1 value is %10.f\n", (temp[0][0]*temp[1][1]) - (temp[0][1]*temp[1][0]));
-	for(i = 0; i < 4; i++)
-		for(j = 0; j < 2; j++)
-			myprintf("%d %d --> %5.f\n", i, j, gain[i][j]);
-	myprintf("l value is %10.f\n", l);
-
-	for(i = 0; i < 4; i++)
-		for(j = 0; j < 2; j++)	gain[i][j] = gain[i][j] * l;
-
-	for(i = 0; i < 4; i++)
-		for(j = 0; j < 2; j++)
-			myprintf("%d %d --> %5.f\n", i, j, gain[i][j]);
-	//Now gain is K, use it to correct.
+	//Use the gain to weight the innovation in the update phase.
 	t->posX += gain[0][0]*y[0] + gain[0][1]*y[1];
-	//myprintf("Y updates as %d %.5f %d %.5f %d\n", t->posY, gain[1][0], y[0], gain[1][1], y[1]);
 	int Y_update = (int)(gain[1][0]*y[0] + gain[1][1]*y[1]);
 	//myprintf("Y upd %.5f \n", gain[1][0]*y[0] + gain[1][1]*y[1]);
 	t->posY += Y_update;
 	t->velX += gain[2][0]*y[0] + gain[2][1]*y[1];
 	t->velY += gain[3][0]*y[0] + gain[3][1]*y[1];
-
 	//Update the covariance matrix.
 
-	//temp is now (I-KH) ->  Identity - gain*I_2
+	//temp will now become (I-KH) ->  Identity - gain*I_2
 	//TODO: check if there's need to optimize or if the compiler will take car.e
 	 for(i = 0; i < 4; i++)
 		for(j = 0; j < 4; j++)
-			if(j == i && i < 2) temp[i][j] = 1 - gain[i][j]; //On the first two els. of the diagonal
+			if(j == i && i < 2) temp[i][j] = 1 - gain[i][j]; //On the first two elements of the diagonal
 			else if(j == i) temp[i][i] = 1;
 			else if (j < 2) temp[i][j] = -gain[i][j];
 			else temp[i][j] = 0;
-	 //To avoid copying again.
-	float temp2[4][4]; //copy of t->cov; somewhere it has to be done!
+
+	float temp2[4][4];
+	//copy old t->cov.
 	for(i = 0; i < 4; i++)
 		for(j = 0; j < 4; j++)
 			temp2[i][j] = t->cov[i][j];
 	matrixproduct(temp, temp2, t->cov);
-	for(i = 0; i < 4; i++)
-		for(j = 0; j < 4; j++)
-			printf("cov %d %d: %.40f\n", i, j, t->cov[i][j]);
 	//now t->cov = P = (I -KH)P
 }
 
@@ -218,12 +197,20 @@ void correctAll(int tracks, int blobs, kalmanTrack states[NUM_BLOBS_MAX], point 
 	int i = 0;
 	for(i = 0; i < blobs; i++) {
 		if(permutation[i] < 0) continue;
+#ifdef KALMAN_PERFORMANCE
+		EE_UINT32 time = get_time_stamp();
+#endif
 		update(states+permutation[i], centroids[i]);
+#ifdef KALMAN_PERFORMANCE
+		myprintf("Update\t%d\n", elapsed_us(time, get_time_stamp()));
+#endif
 		states[permutation[i]].consecutiveInvisibleCount = 0;
 		states[permutation[i]].totalVisibleCount++;
 	}
 }
-
+/**
+ * Interface for the labeling.
+ */
 int efficientKalmanCentroids(int width, int height, bitimg_t image[WIDTH*HEIGHT/8], point centroids[NUM_BLOBS_MAX]) {
 	//bitimg_t temp[BYTES_FOR(WIDTH)*HEIGHT];
 	int numCentroids = 0;
@@ -243,9 +230,7 @@ int efficientKalmanCentroids(int width, int height, bitimg_t image[WIDTH*HEIGHT/
 
 	return numCentroids;
 }
-
-
-
+/** Calculates centroids from already labeled image */
 int kalmanCentroids(int width, int height, label_t expanded[WIDTH*HEIGHT], point res[NUM_BLOBS_MAX]) {
 	unsigned int count[NUM_BLOBS_MAX];
 	unsigned int x_coord[NUM_BLOBS_MAX];
@@ -294,9 +279,7 @@ int test2dKalman(int num_iter){
 			r1 = rand()%2;
 			p.Y+=(r1) ? 4 : 2;
 			predict(&t);
-			printf("Prediction says:\n");
-			printf("Pos: (%d, %d)\n", t.posX, t.posY);
-			printf("Speed: (%.2f, %.2f)\n", t.velX, t.velY);
+
 			int k;
 			for(j = 0; j < 4; j++) {
 				for(k = 0; k < 4; k++) {
@@ -305,7 +288,7 @@ int test2dKalman(int num_iter){
 				printf("\n");
 			}
 			update(&t, p);
-			printf("RealPosition is %d, %d\n", p.X, p.Y);
+
 		}
 
 

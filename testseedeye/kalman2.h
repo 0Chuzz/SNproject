@@ -40,44 +40,18 @@ typedef struct {
 	short botY;
 } point;
 
-
-static float measurementNoiseM[4][4] = {
-		{0.1, 0.1, 1, 1},
-		{0.1, 0.2, 2, 2},
-		{0.3, 0.1, 3, 3},
-		{0.1, 0.9, 4, 1}
-};
-
-static float transitionMatrix[4][4] = {
-	{1, 0, 1, 0},
-	{0, 1, 0, 1},
-	{0, 0, 1, 0},
-	{0, 0, 0, 1}
-};
-
-static float transitionMatrixT[4][4] = {
-	{1, 0, 0, 0},
-	{0, 1, 0, 0},
-	{1, 0, 1, 0},
-	{0, 1, 0, 1}
-};
-
 typedef struct {
 	/** State */
 	short posX, posY;
 	float velX, velY;
 	/** Err. Covariance matrix */
 	float cov[4][4];
-
 	short id;
-
 	short age;
-
 	short totalVisibleCount;
-
 	short consecutiveInvisibleCount;
-
 } kalmanTrack;
+
 
 
 /** Call before start using Kalman Filter. Used to manage the identifiers of the tracks */
