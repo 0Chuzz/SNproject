@@ -16,10 +16,11 @@
 #define VISIBLE_TRESHOLD 2
 #define DELETION_TRESHOLD 2
 #define HALF_UNIT_VALUE UNIT_VALUE/2
+#define APPROX_KALMAN_PERFORMANCE
 
 static float approxMeasurementNoiseM[4][4] = {
-		{10, 10},
-		{10, 10}
+		{0.1*UNIT_VALUE, 0.1*UNIT_VALUE},
+		{0.1*UNIT_VALUE, 0.1*UNIT_VALUE}
 };
 
 static int approxTransitionMatrix[4][4] = {
@@ -112,9 +113,13 @@ int approximate_predictAll(int size, approxKalmanTrack_t states[NUM_BLOBS_MAX]) 
 			size = approximate_delete(size, states, i); //delete is linear, could be better. But we don't care.
 			i--;
 		}
-		EE_UINT32 time = get_time_stamp();
-		approximate_predict(states+i);
-		myprintf("Update\t%d\n", elapsed_us(time, get_time_stamp()));
+	#ifdef APPROX_KALMAN_PERFORMANCE
+			EE_UINT32 time = get_time_stamp();
+	#endif
+			approximate_predict(states+i);
+	#ifdef APPROX_KALMAN_PERFORMANCE
+			myprintf("Update\t%d\n", elapsed_us(time, get_time_stamp()));
+	#endif
 		states[i].age++;
 	}
 	return size;
@@ -128,10 +133,6 @@ int approximate_delete(int size, approxKalmanTrack_t states[NUM_BLOBS_MAX], int 
 	}
 	return size -1;
 }
-/**
- * Eliminates unused tracks and predicts for the remaining ones.
- */
-
 
 /**
  * Performs a correction of the track based on the measure
@@ -149,7 +150,6 @@ void approximate_update(approxKalmanTrack_t* t, point measure) {
 			if(i >= 2 || j >= 2) temp[i][j] = 0;
 			else temp[i][j] = (t->cov[i][j] + approxMeasurementNoiseM[i][j]);
 		}
-
 	}
 	#ifdef DEBUG
 		for(i = 0; i < 4; i++)
@@ -209,9 +209,13 @@ void approximate_correctAll(int tracks, int blobs, approxKalmanTrack_t states[NU
 	int i = 0;
 	for(i = 0; i < blobs; i++) {
 		if(permutation[i] < 0) continue;
+#ifdef APPROX_KALMAN_PERFORMANCE
 		EE_UINT32 time = get_time_stamp();
+#endif
 		approximate_update(states+permutation[i], centroids[i]);
+#ifdef APPROX_KALMAN_PERFORMANCE
 		myprintf("SinglePredict\t%d\n", elapsed_us(time, get_time_stamp()));
+#endif
 		states[permutation[i]].consecutiveInvisibleCount = 0;
 		states[permutation[i]].totalVisibleCount++;
 	}
