@@ -775,7 +775,10 @@ The first modification to the union-find algorithm allows to use only two
  direction, so from bottom to top, right to left.
  The algorithm keeps scanning back and forth the image in loop until no
  more ignored pixels connected to the blobl are left.
- As a result we obtain a buffer containing a single connected shape, that
+\end_layout
+
+\begin_layout Standard
+As a result we obtain a buffer containing a single connected shape, that
  can then be processed separately, and that is deleted from the original
  mask image in order to allow the extraction of the successive blob.
  Figure
@@ -1067,29 +1070,32 @@ name "fig:connected-pixel-spanning"
 \end_layout
 
 \begin_layout Standard
-This algorithm requires 2 black and white buffers, and two bits per pixel
+This algorithm requires two black and white buffers, and two bits per pixel
  in a temporary buffer on the stack.
- First it raster scans the image to find the first pixel.
- When a new pixel is found, the output buffer is updated and the scanning
- direction that was used while finding it is stored in the temporary buffer.
+ First it raster scans the image to find the first pixel and then begin
+ traversing the shape.
+ When a new pixel is found, the output buffer is updated and the current
+ scanning direction is stored in the temporary buffer.
  This is required in order to remember which was the adjacent node that
- was parent in the spanning tree.
- Then the algorithms finds the rightmost unvisited pixel.
+ was the parent in the spanning tree.
+ Then the algorithms finds the rightmost unvisited pixel continues from
+ that.
  For example when the search direction is RIGHT, it checks the pixel on
  directions DOWN, RIGHT, UP in this order.
- When no more unvisited pixel are found, the algorithm moves back to the
- parent pixel, and when the root pixel is reached the algorithm terminates.
+ When no more unvisited pixels are found, the algorithm moves back to the
+ parent pixel, and when finally the root pixel is reached the algorithm
+ terminates.
  
 \end_layout
 
 \begin_layout Standard
-Compared to the previous approaches it uses more memory, but each shape
- pixel is visited at most four times.
+Compared to the previous approac it uses more memory, but it has the advantage
+ of having a more predictable behaviour.
  Indeed if we get back to the graph representation of the image, we can
  see that for a N blobs if we visit the spanning tree we will move over
  N-1 edges and no loop occurs.
- So the space is bounded by the number of pixel of the image, and time is
- bounded by the number of foreground pixels.
+ So the required space is bounded by the number of pixel of the image, and
+ time is bounded by the number of foreground pixels.
  
 \end_layout
 
@@ -1113,8 +1119,12 @@ Performance analysis
 \end_layout
 
 \begin_layout Standard
-Timing measurement were collected from the elaboration for the extraction
- of a single connected component and for total image processing.
+To measure the performance on real hardware, we used a SEED-EYE board connected
+ via serial line to a PC.
+ Ground truth images were sent to the board, and benchmark data was returned
+ back and collected from the PC Timing measurement were collected from the
+ elaboration for the extraction of a single connected component and for
+ total image processing.
  The measurements plotted in figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -1125,10 +1135,11 @@ reference "fig:scatter-plot-of"
  show that the time that the algorithm require to process a single blob
  is linear to the quantity of connected pixel, with a small but not negligible
  constant time part.
- It is interesting to see an outstanding area in the range shortly below
- a thousandth of pixels.
- It consists of eight data points but these outliers deserve a further future
- investigation.
+ It is interesting to see a small quantity of measurement in the area in
+ shortly left to a thousandth of pixels and above 10 milliseconds, that
+ defy the linear relation.
+ Even if it consists of only eight data points, these outliers deserve a
+ further future investigation.
 \end_layout
 
 \begin_layout Standard
@@ -1173,8 +1184,8 @@ name "fig:scatter-plot-of"
 \end_layout
 
 \begin_layout Standard
-The total time for processing an image instead is a gamma distribution with
- average of about 30 milliseconds.
+Furthermore, the measurements showed that the total time for processing
+ an image is a gamma distribution with average of about 30 milliseconds.
  From figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -1186,6 +1197,9 @@ reference "fig:Cumulative-distribution-function"
  time.
  We can see that 50% of the runs are below 29 milliseconds, 90% below 44
  milliseconds with rare worst cases above 60 milliseconds.
+ This shows that for a high frame per second video stream, a soft real time
+ algoritm is feasible provided with a mechanism could be devised in order
+ to abort the elaboration of a frame in case of the rare excessive delay.
 \end_layout
 
 \begin_layout Standard
@@ -1235,23 +1249,33 @@ Optimizations
 
 \begin_layout Standard
 Since the full shape of the blob is not needed for the subsequent steps,
- instead of saving the blob into a buffer, the synthetic values such as
- bounding box and centroid can be calculated while each pixel is visited.
- This allow to cut off a 9.6 KB buffer used for the blob, and the relative
- initialization and usage time.
- Also when updating the synthetic value some calculation can be shaved off:
- the bounding box can be updated only when moving in a particular direction.
- So when the next visited pixel is on the right only the right side of the
- bounding box will be checked and updated, and so on.
- This allow to reduce four checks performed for each pixel into a single
- one.
- Another thing that can be optimized is the first part of the algorithm,
- the scan for the first pixels.
+ instead of saving the blob into a buffer, the synthetic values effectively
+ used such as the bounding box and the centroid coordinates can be calculated
+ while each pixel is being visited.
+ This allows to cut off a 9.6 KB buffer used for the intermediate representation
+ of each blob, and the relative buffer initialization and scan time.
+ 
+\end_layout
+
+\begin_layout Standard
+Moreover, when updating the synthetic values some calculations done on each
+ pixel can be simplified.
+ For example the bounding box can be updated only when moving in a particular
+ direction, so that when the next visited pixel is on the right only the
+ right side of the bounding box will be checked and updated, and so on.
+ This allows to reduce four checks performed for each pixel into a single
+ check.
+ 
+\end_layout
+
+\begin_layout Standard
+Another thing that can be optimized is the first part of the algorithm where
+ we scan the image for the first pixel of a blob.
  In the first implementation each time a new blob is searched the image
  is scanned starting from the top left pixel.
- By saving the last position of the previous scan in two static variables,
- so just using two short int or 4 bytes, the topmost pixel are not scanned
- each time anymore.
+ By storing the last position of the previous scan in two static variables,
+ the subsequent scans avoid to check already checked pixels, and this using
+ only 4 more bytes of RAM.
 \end_layout
 
 \begin_layout Subsection
@@ -1262,8 +1286,16 @@ future work
 In all the algorithms the black and white buffers are considered bit by
  bit, and no attempt is made to exploit CPU word size instead.
  This should lead to performance improvements especially in 32 bits systems.
- Moreover, according to the timing requirements the labeling algorithm can
+ 
+\end_layout
+
+\begin_layout Standard
+Moreover, according to the timing requirements the labeling algorithm can
  be applied to down-scaled images.
+ This would imply a loss of resolution but when the subsequent steps require
+ only coarse syntetics values this only ends up removing noise.
+ Also a system could be devised in order to obtain the fine-grained shape
+ only when required.
 \end_layout
 
 \end_body
