@@ -68,6 +68,20 @@
 
 \begin_body
 
+\begin_layout Title
+Object tracking in embedded systems: component labeling and trajectory predictio
+n
+\end_layout
+
+\begin_layout Author
+Stefano Varotti, Alessandro Lenzi
+\end_layout
+
+\begin_layout Address
+Project report for Sensor Network course, Scuola Superiore Sant'Anna, Pisa,
+ Italy
+\end_layout
+
 \begin_layout Section
 Introduction
 \end_layout
