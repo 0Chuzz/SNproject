@@ -4365,10 +4365,9 @@ status open
 
 \begin_layout Plain Layout
 
-$
+$$
 \backslash
-hat{T}_s(k) = T_{couple} * k * log_2(k)$.
-  
+hat{T}_s(k) = T_{couple} * k * log_2(k)$$  
 \backslash
 
 \backslash
