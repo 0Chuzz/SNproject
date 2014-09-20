@@ -92,7 +92,15 @@ Component labeling is the process of splitting the pixels that have been
  detected containing some moving object into separate shapes grouping them
  by adjacency.
  The labeling part is improved upon a previous implementation in the paper
- SCOPESXXX, that uses a union-find algorithm.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+SCOPES: Smart Cameras Object Position Estimation System
+\begin_inset Quotes erd
+\end_inset
+
+, that uses a union-find algorithm.
  The prediction tasks correlates the shapes detected at a certain point
  in time with the past events, so it recognizes previously seen objects.
  The prediction part uses a Kalman filter calculated upon the centroids
@@ -101,18 +109,21 @@ Component labeling is the process of splitting the pixels that have been
 \end_layout
 
 \begin_layout Standard
-For testing we used a SEED-EYE board, that consists of a PIC32 CPU with
- 128 KB of available RAM and 512K of ROM.
- The SEED-EYE board received images through UART serial line, processed
- them and passed back results and benchmark information back to the PC.
+For testing we used a SEED-EYE board, that consists of a PIC32 CPU without
+ FPU, with 128 KB of available RAM and 512K of ROM.
+ The SEED-EYE board has support for image acquisition via camera, but for
+ the experiment it received images through UART serial line, processed them
+ and passed back results and benchmark information back to the PC.
  As a source of images we used the Fudan Pedestrian data-set.
  This data-set comes from a camera mounted in front of the entrance of a
  office building in Shangai.
- The motion detection part needed for the tracking task is already done
- and ground truth black and white images are provided along with the video
- images.
- So the SEED-EYE received already processed images where motion detection
- algorithm outlined person shapes.
+ It consists of 5 sets of 300 QQVGA images of people entering and exiting
+ the building.
+ In the images of the dataset the motion detection part needed for the tracking
+ task is already done, and ground truth black and white images are provided
+ along with the video images.
+ So the SEED-EYE received already partially processed images where motion
+ detection algorithm outlined moving object over the static background.
  
 \end_layout
 
@@ -1438,10 +1449,6 @@ This means that the actual prediction of the future state at time t+1 will
 \end_layout
 
 \begin_layout Standard
-//Insert here a plot or an example??
-\end_layout
-
-\begin_layout Standard
 Then we can define on such conditional probability density function an 
 \begin_inset Quotes eld
 \end_inset
@@ -2761,7 +2768,7 @@ ility of the assignment function.
 \begin_layout Standard
 There are some notable algorithms achieving a global minimum cost of assignment,
  like the Hungarian one.
- This algorithm has complexity O(n^3), which is indeed an high one for constrain
+ This algorithm has complexity O(n^4), which is indeed an high one for constrain
 ed devices, as the one on which we operated.
  While in the original formulation it wouldn't allow to avoid assignments,
  it can be enriched so that it takes into consideration the cost of not
@@ -2938,8 +2945,15 @@ end{figure}
 \end_layout
 
 \begin_layout Standard
-Very briefly, the algorithm generates all the possible tracks (n) for blobs
- (m) assignment couples, and calculates their cost.
+Very briefly, the algorithm generates all the possible tracks 
+\begin_inset Formula $n$
+\end_inset
+
+ for blobs 
+\begin_inset Formula $m$
+\end_inset
+
+ assignment couples, and calculates their cost.
  Then it sorts such values in increasing order.
  Once the sorting has been performed, the vector containing all assignments
  and their cost is scanned linearly, saving the assignment whenever the
@@ -5123,27 +5137,30 @@ This could be especially good in the case in which the second part is seen
 
 \begin_layout Standard
 From the point of view of the labeling, it seems a good idea to lower further
- the execution time.
- At the present time, we did not exploited the 32-bit architecture on which
- we operated, and instead we only accessed and operated on the memory in
- a bit wise fashion.
- This could possibly led to huge advantage, thanks to a better cache exploitatio
-n and to an enhanced usage of the 32-bit CPU.
+ the execution time of the labeling part.
+ At the present time, we did not exploit the 32-bit architecture on which
+ we operated, and instead we only accessed and operated on the memory containing
+ the images in a bit wise fashion.
+ This could possibly led to a performance increase, thanks to a better cache
+ exploitation and to an enhanced usage of the 32-bit CPU.
+ This would need a further approach change, as the image would be checked
+ by blocks of 32 pixels instead of by single pixels.
 \end_layout
 
 \begin_layout Standard
-A further enhancement of these part, that we seek to investigate in the
- future is the usage of down scaled images, with a lower resolution and
- thus a smaller service time for the process of retrieving the measurements:
- since subsequent steps only need coarse grain information, a loss in resolution
- wouldn't be critical and, instead, it could also enhance the filtering
- part by removing some noise introducing some more useless blobs.
+A further enhancement of this part that we seek to investigate in the future
+ is the usage of down scaled images, with a lower resolution and thus a
+ smaller service time for the process of retrieving the blobs: since subsequent
+ steps only need coarse grain information, a loss in resolution wouldn't
+ be critical and, instead, it could also enhance the filtering part by removing
+ some noise filtering out some useless blobs caused by noise in the previous
+ steps.
 \end_layout
 
 \begin_layout Standard
-In conclusion, we advocate that tracking is definitely possible in soft
- real-time embedded systems, provided that low resolution images are exploited
- and some precision could be sacrificed.
+In conclusion, we advocate that tracking is definitely possible in a high
+ frame per second embedded systems in a soft real time fashion, when low
+ resolution images and very high precision is not critical.
 \end_layout
 
 \end_body
