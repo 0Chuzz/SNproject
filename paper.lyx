@@ -1306,9 +1306,10 @@ For the prediction step, we used the Kalman Filter, an optimal, recursive
  of the target architecture.
  In fact, one of the most interesting features of such filter is its recursive
  nature, which allows to store only a limited amount of information thanks
- to an assumption of Markovianity, tThis is particularly advantageous in
- all cases, like ours, in which memory and processing constraint devices
- must be used to perform any kind of data processing.
+ to an assumption of Markovianity.
+ This is particularly advantageous in all cases, like ours, in which memory
+ and processing constraint devices must be used to perform any kind of data
+ processing.
 \end_layout
 
 \begin_layout Standard
@@ -4558,7 +4559,7 @@ name "fig:Density-function-of"
 \end_layout
 
 \begin_layout Subsubsection
-Qualitative Analysis of Tracking Outcome
+Qualitative Analysis of Tracking
 \end_layout
 
 \begin_layout Standard

@@ -127,10 +127,8 @@ int approximate_predictAll(int size, approxKalmanTrack_t states[NUM_BLOBS_MAX]) 
 
 /** Deletes a track */
 int approximate_delete(int size, approxKalmanTrack_t states[NUM_BLOBS_MAX], int pos) {
-	int i;
-	for(i = pos; i+1 < size; i++) {
-		states[i] = states[i+1];
-	}
+	if(pos == size -1) return pos;
+	states[pos] = states[size-1];
 	return size -1;
 }
 

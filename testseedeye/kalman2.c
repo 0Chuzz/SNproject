@@ -12,7 +12,7 @@
 #define VISIBLE_TRESHOLD 2
 #define DELETION_TRESHOLD 2
 
-#define KALMAN_PERFORMANCE
+//#define KALMAN_PERFORMANCE
 
 static float measurementNoiseM[2][2] = {
 		{0.1, 0.1},
@@ -109,10 +109,8 @@ void predict(kalmanTrack* t) {
 }
 /** Deletes a track */
 int delete(int size, kalmanTrack states[NUM_BLOBS_MAX], int pos) {
-	int i;
-	for(i = pos; i+1 < size; i++) {
-		states[i] = states[i+1];
-	}
+	if(pos == size-1) return pos;
+	states[pos] = states[size-1];
 	return size -1;
 }
 /**
