@@ -452,8 +452,8 @@ name "tab:rules-for-union-find"
 \begin_layout Standard
 The result of this is a buffer where each pixel is assigned a label, that
  ties it to a specific blob.
- When the last pixel has ben processed, all the pixels are labeled and all
- blobs have been detected.
+ When the last pixel has been processed, all the pixels are labeled and
+ all blobs have been detected.
 \end_layout
 
 \begin_layout Standard
@@ -724,7 +724,7 @@ The fastest union-find algorithms, for
  a number of labels equal of the number of pixels.
  Indeed if the programmer attempts to keep temporary labels to a minimum,
  each merge operation will need to modify each pixel belonging to one of
- the merged groups and so will make the merge more cpu intensive, while
+ the merged groups and so will make the merge more CPU intensive, while
  if the programmer attempts to avoid it the number of needed labels grows
  quickly.
  This is not a problem on a computer where 32 bits labels would be a non-issue,
@@ -792,7 +792,7 @@ The first modification to the union-find algorithm allows to use only two
  black and white buffers.
  This is possible by altering the behavior of the algorithm when a pixel
  that is disconnected from the first connected blob is detected.
- Instead of createing and assigning a new label, the new pixel is ignored
+ Instead of creating and assigning a new label, the new pixel is ignored
  and it stays unprocessed.
  Eventually the algorithm will find that the single blob currently being
  processed is still connected to previously ignored pixels.
@@ -1114,7 +1114,7 @@ This algorithm requires two black and white buffers, and two bits per pixel
 \end_layout
 
 \begin_layout Standard
-Compared to the previous approac it uses more memory, but it has the advantage
+Compared to the previous approach it uses more memory, but it has the advantage
  of having a more predictable behaviour.
  Indeed if we get back to the graph representation of the image, we can
  see that for a N blobs if we visit the spanning tree we will move over
@@ -1223,7 +1223,7 @@ reference "fig:Cumulative-distribution-function"
  We can see that 50% of the runs are below 29 milliseconds, 90% below 44
  milliseconds with rare worst cases above 60 milliseconds.
  This shows that for a high frame per second video stream, a soft real time
- algoritm is feasible provided with a mechanism could be devised in order
+ algorithm is feasible provided with a mechanism could be devised in order
  to abort the elaboration of a frame in case of the rare excessive delay.
 \end_layout
 
@@ -1318,15 +1318,15 @@ The task described in this part is to foresee the trajectory of objects,
  In this part, we used the Kalman Filter in order to perform prediction
  on future positions basing on the previous observations.
  Input of this phase are the centroids coming from the previous object identific
-ation, while the output is an assignment of the objects to a consisent label
- allowing to identify them for the time they spend in the scene.
+ation, while the output is an assignment of the objects to a consistent
+ label allowing to identify them for the time they spend in the scene.
  
 \end_layout
 
 \begin_layout Standard
 For the prediction step, we used the Kalman Filter, an optimal, recursive
  data processing algorithm.
- Kalman filter is considered optimal under some criterias, and is a quite
+ Kalman filter is considered optimal under some criteria, and is a quite
  simple and well performing algorithm that has been chosen given the constraints
  of the target architecture.
  In fact, one of the most interesting features of such filter is its recursive
@@ -1368,17 +1368,9 @@ Introduction to Kalman Filter
 As previously stated, Kalman Filter is an optimal, recursive data processing
  algorithm.
  The need of a filter for data processing is due to several factors, among
- which the fact that possibly some measurements of interest of the 
-\begin_inset Quotes eld
-\end_inset
-
-real
-\begin_inset Quotes erd
-\end_inset
-
- whose data is to be analyzed cannot be sampled by the system or are to
- noisy to be reliable; even worst, often we don't have complete knowledge
- of the inputs driving the system of interest.
+ which the fact that possibly some measurements of interest of the data
+ of interest is to noisy to be trusted entirely, either due to the sampling
+ process or to the nature of the data.
 \end_layout
 
 \begin_layout Standard
@@ -1392,11 +1384,11 @@ Assume we're given a state
 \begin_inset Formula $y_{t}$
 \end_inset
 
-varying in time, and a noisy measure 
+ varying in time, and a noisy measure 
 \begin_inset Formula $x_{t}$
 \end_inset
 
-of such state.
+ of such state.
  We can devise, by studying accurately the system, a model of how the state
  evolves.
  Such model will be a probabilistic one, since as we assumed before we might
@@ -1406,23 +1398,22 @@ n takes a certain value will be in the form
 \end_inset
 
 .
- Notice that in general this model of state evolution needs to take into
- account all previous states.
- 
-\end_layout
-
-\begin_layout Standard
-However, in the Kalman Filter a Markovianity Assumption is performed, meaning
- that we assume that the Markovian Property (in words, given the present,
- the future is conditionally independent of the past) holds in our system.
- More formally stated: 
+ This model of state evolution needs to take into account all previous states,
+ but in the Kalman Filter it is assumed that the Markovian Property (in
+ words, given the present, the future is conditionally independent of the
+ past) holds.
+ More formally stated, this will mean: 
 \begin_inset Formula $\forall t,y_{t+1},p(y_{t+1}|y_{0},y_{1},...,y_{t})=p(y_{t+1}|y_{t})$
 \end_inset
 
 .
- This will allow to have a great simplification of the system, since to
- produce an estimation of future value it will not be needed to take into
- account all the previous states.
+ 
+\end_layout
+
+\begin_layout Standard
+This will allow to have a great simplification of the system, since to produce
+ an estimation of future value it will not be needed to take into account
+ all the previous states.
 \end_layout
 
 \begin_layout Standard
@@ -1430,16 +1421,17 @@ Sadly, however, it won't be possible to measure
 \begin_inset Formula $y_{t}$
 \end_inset
 
- directly: instead, the filter will be fetched it's noisy correlated measure,
- 
+ directly: instead, the filter will be feed with a noisy correlated measure
+ of 
+\begin_inset Formula $y_{t}$
+\end_inset
+
+, 
 \begin_inset Formula $x_{t}$
 \end_inset
 
-.
- The measurements performed will be related to the real value, but more
- noisy.
- Such values are also assumed to be conditionally independent given the
- actual state 
+.Such values are also assumed to be conditionally independent given the actual
+ state 
 \begin_inset Formula $y_{t+1}$
 \end_inset
 
@@ -1453,13 +1445,31 @@ Sadly, however, it won't be possible to measure
 
 \begin_layout Standard
 This means that the actual prediction of the future state at time t+1 will
- have to be performed using a conditional probability density function,
- in which the conditioning part are the sequence of noisy measurements fetched
- in the past to the filter.
- The basic idea under the hood of the Kalman Filter is to propagate such
- conditional probability density function, whose aim is to describe given
- the previous noisy measurements, what is the likeliness that the actual
- state had a certain value.
+ have to be performed using a 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+textbf{conditional probability density function}
+\end_layout
+
+\end_inset
+
+, in which the conditioning part are the sequence of noisy measurements
+ fetched in the past to the filter.
+ The basic idea 
+\begin_inset Quotes eld
+\end_inset
+
+under the hood
+\begin_inset Quotes erd
+\end_inset
+
+ of the Kalman Filter is to propagate such conditional probability density
+ function describing the likeliness that the actual data has certain values.
 \end_layout
 
 \begin_layout Standard
@@ -1901,7 +1911,7 @@ $$
 
 \begin_layout Standard
 However, in the previous we implicitly assumed that the point whose position
- we are trying to estimate has no dynamic, meaning that it doesn't move.
+ we are trying to estimate has static nature.
  What happens if, instead, we introduce motion into the system?
 \end_layout
 
@@ -2199,17 +2209,8 @@ hat{x}(t)$
 posX & posY & velX & velY\end{array}$
 \end_inset
 
-|
-\end_layout
-
-\begin_layout Standard
-where the posX and posY are the components of the position and velX and
+|, where the posX and posY are the components of the position and velX and
  velY are the components of the speed at time t.
-\end_layout
-
-\begin_layout Standard
-However, such state can be more complicated and could, as an example, take
- into consideration also the acceleration.
 \end_layout
 
 \begin_layout Standard
@@ -2224,8 +2225,8 @@ uncertainty
 \end_inset
 
  contained in the system.
- When moving to a more complicated state, this is no longer just a value,
- but becomes represented as a matrix 
+ When moving to a more complicated state, the latter is no longer just a
+ value, but becomes represented as a matrix 
 \begin_inset ERT
 status open
 
@@ -2255,7 +2256,7 @@ status open
 \begin_layout Plain Layout
 
 $F$.
- Going on with the previous example, such matrix can be represented as follows:
+ Going on with the previous example, we get:
 \end_layout
 
 \end_inset
@@ -2279,8 +2280,8 @@ F=\begin{bmatrix}1 & 0 & \Delta t & 0\\
 \end_layout
 
 \begin_layout Standard
-As it is possible to see immediately, such matrix represents the evolution
- of the state in terms of position and speed.
+This matrix obviously represents the evolution of the state in terms of
+ position and speed.
 \end_layout
 
 \begin_layout Standard
@@ -2288,8 +2289,20 @@ In the previous, we implicitly assume to have some kind of knowledge of
  the system (i.e.
  the speed u at which the point taken into consideration moves) and some
  observations.
- In this case, we distinguish between observed values and modeled values.
- The observation matrix 
+ In this case, we distinguish between 
+\series bold
+observed values
+\series default
+ and 
+\series bold
+modeled values
+\series default
+.
+ T
+\end_layout
+
+\begin_layout Standard
+he observation matrix 
 \begin_inset ERT
 status open
 
@@ -2303,9 +2316,9 @@ $H$
  is used in order to define which values can be observed in the system.
  In the case in which all components of the state are observable, the matrix
  will correspond to the identity.
- However, in general the matrix will be of rectangular shape; going on with
- our example, if we assume that we can only observe the x and y component
- of the position, such matrix will be made as follows:
+ Nonetheless, most of the times the matrix will be of rectangular shape;
+ if we assume that we can only observe the x and y component of the position,
+ we define H as:
 \end_layout
 
 \begin_layout Standard
@@ -2324,7 +2337,8 @@ H=\begin{bmatrix}1 & 0 & 0 & 0\\
 \begin_layout Standard
 A more complex characterization is necessary in order to infer the noise
  of the system.
- In general, it will be different depending on the system actually measured.
+ In general, it will be different depending on the nature of the sampled
+ data, on the sensing devices and several other factors.
  We will assume to have a vector 
 \begin_inset ERT
 status open
@@ -2375,15 +2389,13 @@ $Q$ and $R$
 
  can be found either by an accurate studying of the measurement equipment,
  by fine-tuning the filter or by some learning mechanism.
- In the following, we will assume that such values are given.
- In general these values may vary in time, however we will assume them to
- be constant.
+ These values will be assumed as given and constant over time in the following.
 \end_layout
 
 \begin_layout Standard
 Let's now proceed to explain how the algorithm actually works.
- First, let there be known that, although such distinction was not highlighted
- in the previous example, we can divide the filter behavior in two parts:
+ Often, the algorithm is divided in two main phases, although such distinction
+ was not highlighted in the previous example:
 \end_layout
 
 \begin_layout Itemize
@@ -2396,11 +2408,12 @@ status open
 
 \backslash
 emph{predict} phase is responsible of providing an a-priori estimation based
- on the actual knowledge of the system.
+ on the 
+\backslash
+textbf{actual knowledge} of the system.
  In this phase, the system evolution model $F$ is applied to the current
- state to update the estimation as well as the $P$ matrix.
- As previously explained, this will make the uncertainty of the process
- grow.
+ state and to the $P$ matrix.
+ Outcome of this phase is a new estimation and a growth in uncertainty
 \end_layout
 
 \end_inset
@@ -2417,8 +2430,9 @@ status open
 
 
 \backslash
-emph{correct} or update phase is responsible of updating the knowledge of
- the system using new measurements.
+emph{correct} or update phase is responsible of 
+\backslash
+textbf{updating the knowledge} of the system using new measurements.
 \end_layout
 
 \end_inset
@@ -2431,12 +2445,11 @@ Predict
 \end_layout
 
 \begin_layout Standard
-This phase, is represented by two simple equations that respectively provide
- an update estimation and update the uncertainty measure.
- In the most general form, this part also contemplates the possibility of
- having a control model and a control vector, which is however neglected
- in the following since this feature has not been used in the described
- project and for the sake of simplicity.
+This phase, is represented by two simple equations.In the most general form,
+ this part also contemplates the possibility of having a control model and
+ a control vector, which is however neglected in the following since this
+ feature has not been used in the described project and for the sake of
+ simplicity.
 \end_layout
 
 \begin_layout Standard
@@ -2486,8 +2499,8 @@ Correct
 
 \begin_layout Standard
 This is the most complicated phase in the calculation of the system state,
- as it performs a new calculation of the conditional probability density
- function carried along by the Kalman Filter and used for subsequent estimations.
+ as it changes the conditional probability density function used to produce
+ predictions.
  
 \end_layout
 
@@ -2500,14 +2513,8 @@ status open
 
 
 \backslash
-emph{measurement innovation}, a vector that, for every visible value of
- the state, calculates the difference between the estimation performed in
- the previous predict state and the actual measured value.
-\end_layout
-
-\begin_layout Plain Layout
-
-This is done with the following equation:
+emph{measurement innovation}, a vector that containing for every component
+ the error between prediction and measurement:
 \end_layout
 
 \begin_layout Plain Layout
@@ -2533,9 +2540,8 @@ $$
 \end_layout
 
 \begin_layout Standard
-The subsequent step is calculating the innovation of the covariance matrix.
- Notice how to every component observed the measurement noise is added,
- thus representing the variance of the new measurement:
+The innovation of the covariance matrix adds the measurement noise to the
+ observable values components of the covariance matrix:
 \end_layout
 
 \begin_layout Standard
@@ -2563,7 +2569,8 @@ $$
 \end_layout
 
 \begin_layout Standard
-The most important step is calculating the Kalman Gain:
+The most important step is calculating the Kalman Gain, later used to decide
+ how much the new measurement should affect the state update:
 \end_layout
 
 \begin_layout Standard
@@ -2650,11 +2657,9 @@ Using Kalman Filter for Tracking
 \begin_layout Standard
 What has been described in the previous part refers to the optimal estimation
  of the state of a single object, or more precisely of its position.
- However, starting from this, it is possible to think to generalize such
- problem in order to perform tracking over a stream of images.
  The aim of this part is to describe how is possible to consistently track
- objects along a stream of images using the estimations provided by the
- Kalman Filter.
+ multiple objects along a stream of images using the estimations provided
+ by the Kalman Filter.
 \end_layout
 
 \begin_layout Standard
@@ -2664,18 +2669,12 @@ In the following, we will call tracks the path composed by all discrete
  that is more specifically a representation of a blob in terms of its centroids
  and bounding box.
  In this case, such centroids collection will be seen as a collection of
- measurements, which will be used in order to correct the estimations in
- subsequent step.
+ measurements, exploited to correct the estimations in subsequent step.
 \end_layout
 
 \begin_layout Standard
-The object recognition part is assumed to be integrated in the system using
- a different functions, which returns a list of measurements and is explained
- in detail in the previous section.
-\end_layout
-
-\begin_layout Standard
-This poses several challenges:
+The task of tracking multiple object across image streams poses several
+ challenges, among which we mention:
 \end_layout
 
 \begin_layout Enumerate
@@ -2690,6 +2689,11 @@ Objects might leave the scene, with the subsequent need to delete the tracks
 \begin_layout Enumerate
 It is necessary to find a way to assign measurements to predictions in order
  to perform corrections along the stream
+\end_layout
+
+\begin_layout Enumerate
+Noisy measurements, due to errors in background subtraction process or image
+ nature
 \end_layout
 
 \begin_layout Standard
@@ -2717,41 +2721,34 @@ identifier
 \end_layout
 
 \begin_layout Itemize
-total visible frames
-\end_layout
-
-\begin_layout Itemize
 consecutive invisible frames
 \end_layout
 
 \begin_layout Standard
 The age of the track is used in order to decide whether to take into account
  for displaying or not.
- This is done in order to avoid noisy blobs appearing for just one frame
- to overly complicate the visualization of the system.
- The consecutive invisible frames component is used in order to delete tracks
- that have not been assigned to measurements for too much time, so that
- they don't perturbate the measurement of assignments in the following steps.
+ This allows to avoid blobs detected only a few times (in our implementation,
+ in just one frame) to appear.
+ The consecutive invisible frames component is used to delete tracks that
+ have not been assigned to measurements for too much time, so that they
+ don't perturbate the measurement of assignments in the following steps
+ and allow for a smaller memory footprint.
 \end_layout
 
 \begin_layout Standard
-The system starts by an initialization phase, in which the output of a first
- object detection phase is used to initialize the tracks in the order in
- which objects are detected, thus without the assignment step.This allows
- to start the subsequent stream analysis, which is made of three main functions:
+After the initialization, the stream analysis is composed of three parts:
  predict, assign and correct.
  Such procedures have been developed in two ways, for reasons and in ways
  that will be clarified later.
 \end_layout
 
 \begin_layout Standard
-Let us first start by the description of the prediction step, which is in
- fact the first step executed on every frame.
- This step is implemented, for every previously detected track in a very
- straightforward manner which accurately reflects the equations shown before.
+The prediction step is implemented, for every previously detected track
+ in a very straightforward manner accurately reflecting the equations of
+ previous subsection.
  The tracks which have been invisible for too much time (thus, referring
  in our assumptions to object that left the scene) are deleted, and their
- prediction is not performed.
+ prediction is not performed to save some time.
  Another variation is the increment of the consecutive invisible frames,
  which will eventually be decremented in case of successful tracking in
  the correct phase executed later.
@@ -2762,14 +2759,9 @@ Let us first start by the description of the prediction step, which is in
 \end_layout
 
 \begin_layout Standard
-Now that we have such values, the issue is assigning them to the correct
- objects detected in the scene, always taking into consideration that new
- objects might appear and other may leave.
-\end_layout
-
-\begin_layout Standard
-To do so, it is necessary to perform some kind of assignment, which is responsib
-ility of the assignment function.
+Now that we have such hopefully good values, the issue is assigning them
+ to the correct objects detected in the scene, always taking into consideration
+ that new objects might appear and other may leave.
  What we want is to minimize the cost of the assignment, which is represented
  by the difference between the measured position and the detected, noisy
  object position.
@@ -2782,8 +2774,18 @@ ility of the assignment function.
 \begin_layout Standard
 There are some notable algorithms achieving a global minimum cost of assignment,
  like the Hungarian one.
- This algorithm has complexity O(n^4), which is indeed an high one for constrain
-ed devices, as the one on which we operated.
+ This algorithm has complexity 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+$O(n^4)$ in time and $O(n^2) in space$
+\end_layout
+
+\end_inset
+
+, which is indeed an high one for constrained devices.
  While in the original formulation it wouldn't allow to avoid assignments,
  it can be enriched so that it takes into consideration the cost of not
  performing an assignment, thus seeming suitable enough for the problem
@@ -2971,7 +2973,7 @@ Very briefly, the algorithm generates all the possible tracks
  Then it sorts such values in increasing order.
  Once the sorting has been performed, the vector containing all assignments
  and their cost is scanned linearly, saving the assignment whenever the
- flags for both the blog and the track involved are free.
+ flags for both the bloB and the track involved are unset.
  This cycle ends whenever the cost is greater than the unassignment cost,
  meaning that on average we expect the number of iterations of this step
  to be way smaller than the maximum 
@@ -3018,7 +3020,18 @@ $O(nm)$
 \end_inset
 
  - a very small value in practice - plus the two flags arrays, occupying
- respectively m and n bytes.
+ respectively 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+$m$ and $n$
+\end_layout
+
+\end_inset
+
+ bytes.
  The space of the latter vectors could be greatly reduced by using a vector
  of flags in a bit fashion.
  However we decided that, due to the low space occupation of such vectors
@@ -3028,14 +3041,17 @@ $O(nm)$
 \end_layout
 
 \begin_layout Standard
-Notice that this algorithm for assignment is, on average, more costly than
- the simplest one, in which for every track (or blob, alternatively), the
- smallest-distance blob is selected given that the cost of unassignment
- is not overtaken.
+This assignment algorithm is more costly than the simplest one, in which
+ for every track (or blob, alternatively), the smallest-distance blob(or
+ track) is selected given that the cost of unassignment is not overtaken.
  However, we considered this approach to be more effective since the simplest
  one would induce a bias due to the scanning order in the assignment, which
  is particularly problematic in the case in which a track previously assigned
  to an object that has now left the scene is checked for assignment.
+ A probabilistic approach, calculating a random permutation for the order
+ of scanning could be devised achieving a lower complexity by avoiding the
+ sorting phase, and we propose to further investigate how this could affect
+ precision.
 \end_layout
 
 \begin_layout Standard
@@ -3043,7 +3059,7 @@ Output of this phase is a vector in which, for every blob, the position
  of the corresponding assigned track is stored.
  Another vector, containing all unassigned blobs is returned in this phase;
  elements in this vector are used to initialize new tracks, initally marked
- as invisible and that will try to seek the currently unidentified blob
+ as invisible and that will try to follow the currently unidentified blob
  in the next element of the stream.
 \end_layout
 
@@ -3112,22 +3128,11 @@ $P_p(k)$
 
  will result in a matrix of two columns and four rows.
  Inverting the S matrix is now easy, since we know that it is a two by two.
- Thus the Kalman Gain will have a 2 columns and 4 rows, exactly as we expected
- since we need it to weight the contribution of each measurement to the
- update of the state and of the uncertainty.
- It is now possible to update the state and the matrix 
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-$P$
-\end_layout
-
-\end_inset
-
- and to return updated tracks position, corrected velocity estimation and
- uncertainty and to proceed with the analysis of the next frame.
+ The Kalman Gain will have a 2 columns and 4 rows, exactly as we expected
+ since we need it to weight the contribution of the innovation for the four
+ state components and to correctly update the uncertainty.
+ After the update of the state and of the matrix of uncertainty, the image
+ processing step is finished.
 \end_layout
 
 \begin_layout Standard
@@ -3184,7 +3189,7 @@ $1/precision$
  poses a severe limitation by this point of view.
  When assigning a variance to a measurement, in fact, the common suggestion
  is to use a very high value, in order to represent the high uncertainty
- of the process.
+ involved.
  However, when the Kalman Gain is calculated, for some values this could
  lead to intermediate values for which 
 \begin_inset ERT
@@ -3203,9 +3208,33 @@ $K*precision^2$ are bigger than $2^32$, the maximum value that we can represent
  whenever a division or a change in base is involved, it is necessary to
  anticipate it as much as possible) and a careful tailoring of the precision
  and of the variance initial value is necessary.
+\end_layout
+
+\begin_layout Standard
+In both cases, the state of a track is represented using 5 short integer
+ values, namely position components, age, consecutive invisible frame count
+ and identifier.
+ In the floating point version, the speed components and the 4x4 elements
+ of the covariane matrix are floats, while in the fixed point implementation
+ they are replaced with 32 bits integers.
+ In both the cases, the space occupied for a single track is of 84 bytes,
+ taking into account the 
+\begin_inset Quotes eld
+\end_inset
+
+hole
+\begin_inset Quotes erd
+\end_inset
+
+ left in memory by the odd number of shorts.
+ Altough this already represents a good memory footprint, an even lighter
+ solution could be implemented by avoiding to store elements of the matrix
+ that, in practice, will always have value 0 given our state evolution model,
+ possibly allowing to represent a track with just 44 bytes.
  We will now proceed to evaluate the performance of the three main functions
  adopted in the tracking process, to then compare the two versions developed
  for each from a performance point of view, starting from the prediction.
+ 
 \end_layout
 
 \begin_layout Paragraph
@@ -3322,10 +3351,7 @@ name "fig:predictionSingleFloat"
 
 \begin_layout Standard
 The version with using integers to emulate fixed point numbers performs
- a lot better, but still the advantage is not very clear in this very lightweigh
-t phase.
- In this case, for every track we were able to achieve an execution time
- which is on average of 
+ a lot better with an execution time which is on average of 
 \begin_inset ERT
 status open
 
@@ -3357,7 +3383,9 @@ $7
 \backslash
 mu$s, while with a probability of about 99
 \backslash
-% the computation will take less than 9 seconds.
+% the computation will take less than 9 $
+\backslash
+mu$s.
  In no case we were able to observe values greather than 13 $
 \backslash
 mu$s, which is actually less than the minimum (15 $
@@ -3417,7 +3445,7 @@ Cumulative Distribution Function of the prediction (fixed point version)
 Overall, the prediction performed on all tracks behaves as we expect, assuming
  the shape of a gamma distribution, being the sum of the contribution of
  several exponentials.
- The two total prediction times are show in 
+ The total prediction times for the two versions are show in 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:Comparison-between-the"
@@ -3427,7 +3455,8 @@ reference "fig:Comparison-between-the"
 , depicting the fixed point execution time probability density function
  (in blue) and the floating point one (in red).
  From the plot, it is possible to see how the mass of probability of the
- optimized version performs significantly better, having an average of 
+ optimized version is concentrated on smaller values, having an average
+ of 
 \begin_inset ERT
 status open
 
@@ -3498,7 +3527,7 @@ The assignment algorithm has been developed in two fashion: in the former,
  we used as distance measure the classical Euclidean Distance between the
  predicted point of each track and the actual measurements performed in
  each step; in the latter we exploited the fact that the square root operator
- is strictly monotone to avoid to use the costly 
+ is strictly monotone to avoid to use the costly software-implemented 
 \begin_inset ERT
 status open
 
@@ -3516,7 +3545,7 @@ texttt{sqrt}
 
 \begin_layout Standard
 As said before from a simple average analysis of the assignment algorithm,
- its complexity in time is 
+ its average complexity in time is 
 \begin_inset ERT
 status open
 
@@ -3983,8 +4012,14 @@ mu$s.
 \end_inset
 
  it is not clear whether the distribution of the execution time behaves
- like a Gamma function, as can be seen in ...
- .
+ like a Gamma function, as can be seen in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Probability-density-function"
+
+\end_inset
+
+.
  For sure, we can state that the probability that the execution time will
  take less than 
 \begin_inset ERT
@@ -4044,9 +4079,10 @@ name "fig:Probability-density-function"
 \end_inset
 
 Although these numbers don't seem impressive, specially when compared to
- the ones resulting from the assign step, we have to take into count the
- fact that they are for a single track-blob couple, and thus may result
- in a execution time of the whole correction phase way more costly.
+ the ones resulting from the assign step, we have to take into count that
+ they are for a single track-blob couple, and thus may result in a execution
+ time of the whole correction phase way more costly.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -4239,6 +4275,31 @@ In this part we will briefly discuss the performance of the previous three
 \end_layout
 
 \begin_layout Standard
+From a space occupation point of view, we mention that centroids are composed
+ by 6 shorts, and thus occupy 12 bytes each.
+ Experimentally, the maximum number of objects (and thus of tracks, since
+ they are always less or equal to the maximum number of objects detected
+ two frames before) are 32, thus achieving a memory footprint of than 1392B.
+\end_layout
+
+\begin_layout Standard
+To this, we could add some auxiliary short vectors, namely the one for unassigne
+d blobs and the one storing assignments, whose size is MAX_NUM_BLOBS 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Which is a constant defining the limit in the number of blobs that can be
+ treated.
+ This value is 
+\end_layout
+
+\end_inset
+
+ for 2 bytes, with a total footprint in our implementation of 128 bytes.
+\end_layout
+
+\begin_layout Standard
 In 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -4249,34 +4310,24 @@ reference "fig:Number-of-tracks"
  it's possible to see the variation of the execution time for all the operations
  on a frame plotted against the number of tracks and the number of blobs
  recognized in it.
- As it was already clear from the previous analysis, we can see that the
- slowest component, dominating the execution time is the one in the assignment
- process, as it is possible to see from the quadratic execution time behavior
- 
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-Previously, we stated that the assignment time has complexity 
+ As it was already clear from the previous analysis, the slowest component,
+ dominating the execution time is the one in the assignment process.
+ We have a quadratic behaviour in terms of both the number of tracks and
+ the number of blobs.
+ In fact, altough the algorithm is 
 \begin_inset ERT
 status open
 
 \begin_layout Plain Layout
 
-$O(nmlog(nm))$.
- However, if we assume that $n 
+$O(klogk)$ in the number of couples, since $n 
 \backslash
-simeq m$, as it is in our application, this complexity becomes $O(2n^2log(n)$
+simeq m$, it would have quadratic complexity in the number of objects as
+ expected.
 \end_layout
 
 \end_inset
 
-
-\end_layout
-
-\end_inset
-
-.
  
 \end_layout
 
@@ -4378,7 +4429,7 @@ hat{T}_s(k) = T_{couple} * k * log_2(k)$$
 
 The $T_{couple}$ parameter will depend on several factors, and thus its
  estimation has been done experimentally on the gathered samples, finding
- that a good value for this parameter could be in the interval of $[4, 7.5]
+ that a good value for this parameter could be in the interval of $[4, 8]
  
 \backslash
 mu$s.
@@ -4467,7 +4518,8 @@ status open
 
 $T_{couple} = 7.5$, which has a greather (but still comparable to the variance)
  error, but gives a good overestimation of the service time also for a small
- number of couples.
+ number of couples, while the huge difference for higher numbers guarantees
+ that the performance will actually be better than the ones stated below.
 \end_layout
 
 \end_inset
@@ -4477,10 +4529,49 @@ $T_{couple} = 7.5$, which has a greather (but still comparable to the variance)
 
 \begin_layout Standard
 With such value, we can see how, if we wish to process at a frame rate of
- 30fps, we can track approximately up to 4400 couples; since we expect the
- number of blobs and tracks to be almost the same, we can process images
- containing no more than 66 objects.
- 
+ 30fps, we can track approximately up to 496 couples; meaning up to 23 objects
+ since m and n are comparable.
+ However this esteem is really pessimistic for high values as it can be
+ seen in the plot 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Experimental-service-time"
+
+\end_inset
+
+, and this is confirmed by experimental results, as we were able to treat
+ 640 couples in 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+$19944 
+\backslash
+mu$s
+\end_layout
+
+\end_inset
+
+, thus allowing for a frame rate of 50fps.
+ Instead, using for higher values 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+$T_{couple} = 4$
+\end_layout
+
+\end_inset
+
+, a less pessimistic estimation which still gives a good error margin for
+ high values, we can treat up to 850 couples, thus a maximum number of 29
+ objects.
+ To reach an higher number of object, a more complex assignment procedure
+ could be devised, either using a randomized approach instead of a sorting
+ procedure or using some search bounds to make the number of comparisons
+ decrease.
 \end_layout
 
 \begin_layout Standard
@@ -4536,10 +4627,11 @@ mu$s
 
 \end_inset
 
- is about 0.9, meaning that we expect our service time to be within this
- range, which would allow to process images at a very high frame rate, however
- taking into account that this will hold only for a number of objects in
- the order of 25 units.
+ is about the 90%, meaning that we expect our service time to be within
+ this range, which would allow to process images at a very high frame rate,
+ however taking into account that this will hold only for a number of about
+ of 25 units.
+ In practice we processed up to 32 units without particular issues.
  
 \end_layout
 
@@ -4613,8 +4705,8 @@ separating
 \begin_inset Quotes erd
 \end_inset
 
- parts the label should be assigned to be consistent, without more precise
- assumptions about the nature of the object tracked 
+ parts the label should be assigned to be consistent, the trajectory prediction
+ system has no way to tell.
 \end_layout
 
 \begin_layout Itemize
@@ -4647,6 +4739,13 @@ This means that, as an example, if an object previously tracked is assigned
  Consistently, as it in fact occurs in our data set, if the object previously
  wrongly assigned is then re-assigned after some steps to its previous track,
  this will count as another error.
+\end_layout
+
+\begin_layout Standard
+We consider as measure for the goodnes the number of blobs assignments consinste
+nt with the gold.
+ The other measure, wrong images, refers to the number of images with at
+ least an error in it.
 \end_layout
 
 \begin_layout Standard
@@ -4711,7 +4810,7 @@ Float Version
 \begin_inset Text
 
 \begin_layout Plain Layout
-Number of blobs for the analysis
+Number of blob assigments
 \end_layout
 
 \end_inset
@@ -4770,16 +4869,6 @@ Number of images
 
 \begin_layout Plain Layout
 Wrong Images
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-By wrong images we mean images containing at least one error.
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \end_inset
@@ -4965,6 +5054,9 @@ reference "fig:Contribution-to-the"
  on all the other components by orders of magnitude.
  Of course this applies both in the case in which the filtering part was
  carried on with floating point and with fixed point approximation.
+ The difference of these optimization is not able to stand out on the whole
+ system time analysis, so we present only the performances against the floating
+ point version.
 \end_layout
 
 \begin_layout Standard
@@ -5154,7 +5246,7 @@ Higher frame rates could be also supported, provided that the interruption
 
 \begin_layout Standard
 Of course, the introduction of this possibility undermines one of the assumption
-s used in the Kalman Filter implementation, for which measurements inter-arrival
+s used in our Kalman Filter implementation, for which measurements inter-arrival
  times are supposed to be constant, thus possibly affecting the precision
  of the procedure.
  Still, given the littler contribution of the Kalman Filter parts in the
@@ -5162,10 +5254,11 @@ s used in the Kalman Filter implementation, for which measurements inter-arrival
  models for this part, as an example taking into account also the bounding
  box in the object in the state model.
  Also the assignment part could be improved, by introducing some more complex
- metrics allowing possibly to cope with cases in which a blob separates:
- assuming that the tracked bodies won't change very fast their shape, we
- could take into consideration also the area of the bounding box in evaluating
- the cost of the assignment.
+ metrics allowing possibly to cope with cases in which a blob separates
+ or noisy measurements are performed around the expected position: assuming
+ that the tracked bodies won't change very fast their shape, we could take
+ into consideration also the area of the bounding box in evaluating the
+ cost of the assignment.
 \end_layout
 
 \begin_layout Standard
